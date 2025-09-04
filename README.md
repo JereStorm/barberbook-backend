@@ -96,10 +96,14 @@ Participan estudiantes, tutora y profesora, aplicando buenas prácticas de desar
 
 ### Documentacion:
 
-- Presentacion: https://www.canva.com/design/DAGiN-Z6BJY/7ekvPEv_fIHH8W8yAe-MTA/edit?utm_content=DAGiN-Z6BJY&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton
-- Google Drive: https://drive.google.com/drive/folders/1iNgk87ktPxIVHVjKhX8JX5RhkVyxDoiI?usp=sharing
-- Jira: https://proyecto-fip-grupo-28.atlassian.net/jira/software/projects/SCRUM/boards/1/backlog?atlOrigin=eyJpIjoiZWM0YmI1MTY5MzkwNDQxNzk1YzFkOWQwZmM0OTMwYWMiLCJwIjoiaiJ9
-- Figma: https://www.figma.com/design/wnLUC1FCfYv7Dk45079Jni/Maquetado?node-id=0-1&t=6iHRilAAuMIV8MKK-1
+- Presentacion:
+  -- https://www.canva.com/design/DAGiN-Z6BJY/7ekvPEv_fIHH8W8yAe-MTA/edit?utm_content=DAGiN-Z6BJY&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton
+- Google Drive:
+  -- https://drive.google.com/drive/folders/1iNgk87ktPxIVHVjKhX8JX5RhkVyxDoiI?usp=sharing
+- Jira:
+  -- https://proyecto-fip-grupo-28.atlassian.net/jira/software/projects/SCRUM/boards/1/backlog?atlOrigin=eyJpIjoiZWM0YmI1MTY5MzkwNDQxNzk1YzFkOWQwZmM0OTMwYWMiLCJwIjoiaiJ9
+- Figma:
+  -- https://www.figma.com/design/wnLUC1FCfYv7Dk45079Jni/Maquetado?node-id=0-1&t=6iHRilAAuMIV8MKK-1
   
 ---
 
