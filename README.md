@@ -50,7 +50,15 @@ npm install
 
 ### 3.3 Configurar variables de entorno
 
-Por definir
+Crear archivo .env en la razi del proyecto con las siguientes variables:
+
+DB_HOST = -Tu Host-
+DB_PORT = -Tu Port-
+DB_USERNAME = -Tu Username- 
+DB_PASSWORD = -Tu Password-
+DB_NAME = barberbook
+DB_TYPE = mysql
+
 
 ### 3.4 Levantar la base de datos (ejemplo con Docker a futuro)
 
