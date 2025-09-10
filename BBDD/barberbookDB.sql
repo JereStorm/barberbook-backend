@@ -40,7 +40,7 @@ CREATE TABLE users (
 CREATE TABLE clients (
     id INT AUTO_INCREMENT PRIMARY KEY,
     salon_id INT NOT NULL,
-    name VARCHAR(150) NOT NULL,
+    name VARCHAR(150) salonsNOT NULL,
     email VARCHAR(150),
     mobile VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
