@@ -1,5 +1,5 @@
 -- ==========================================
--- BarberBook Database Schema - Gestión de Usuarios
+-- BarberBook Database Schema 
 -- ==========================================
 
 DROP DATABASE IF EXISTS barberbook;
