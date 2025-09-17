@@ -1,29 +1,54 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { ClassSerializerInterceptor } from '@nestjs/common';
+
+// Entities
+import { User } from './modules/users/entities/user.entity';
+import { Salon } from './modules/salons/entities/salon.entity';
+
+// Modules
+import { UsersModule } from './modules/users/users.module';
+import { SalonsModule } from './modules/salons/salons.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
+    // Variables de entorno
     ConfigModule.forRoot({
-      isGlobal: true, // disponible en toda la app
+      isGlobal: true,
+      envFilePath: '.env',
     }),
+    
+    // Base de datos
     TypeOrmModule.forRootAsync({
-      useFactory: () => ({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
         type: 'mysql',
-        host: process.env.DB_HOST,
-        port: parseInt(process.env.DB_PORT!, 10),
-        username: process.env.DB_USERNAME,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME,
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true,
+        host: configService.get('DB_HOST'),
+        port: +configService.get('DB_PORT'),
+        username: configService.get('DB_USERNAME'),
+        password: configService.get('DB_PASSWORD'),
+        database: configService.get('DB_NAME'),
+        entities: [User, Salon],
+        synchronize: false, 
+        logging: configService.get('NODE_ENV') === 'development',
       }),
+      inject: [ConfigService],
     }),
-  
+    
+    // Módulos de la aplicación
+    AuthModule,
+    UsersModule,
+    SalonsModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    // Interceptor global para serialización de DTOs
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ClassSerializerInterceptor,
+    },
+  ],
 })
 export class AppModule {}
