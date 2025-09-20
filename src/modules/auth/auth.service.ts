@@ -48,6 +48,7 @@ export class AuthService {
     // Usamos el 'jwtService' para firmar el token.
     const access_token = this.jwtService.sign(payload);
 
+    console.log(access_token)
     // 5. Por ultimo, preparamos la respuesta que le vamos a mandar al cliente.
     // Incluimos el 'access_token' y la informacion del usuario.
     const response: AuthResponseDto = {

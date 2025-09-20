@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Clients } from './entities/clients.entity';
+import { Client } from './entities/client.entity';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 
@@ -12,8 +12,8 @@ import { UpdateClientDto } from './dto/update-client.dto';
 @Injectable()
 export class ClientsService {
   constructor(
-    @InjectRepository(Clients)
-    private readonly clientsRepository: Repository<Clients>,
+    @InjectRepository(Client)
+    private readonly clientsRepository: Repository<Client>,
   ) { }
 
   /**
@@ -23,7 +23,7 @@ export class ClientsService {
    * @returns Cliente creado.
    * @throws Error si ocurre un problema al crear el cliente.
    */
-  async create(createClientDto: CreateClientDto): Promise<Clients> {
+  async create(createClientDto: CreateClientDto): Promise<Client> {
     try {
       const client = this.clientsRepository.create(createClientDto);
       return await this.clientsRepository.save(client);
@@ -40,7 +40,7 @@ export class ClientsService {
    * @param salonId ID del salón.
    * @returns Lista de clientes.
    */
-  async findAll(salonId: number): Promise<Clients[]> {
+  async findAll(salonId: number): Promise<Client[]> {
     return await this.clientsRepository.find({
       where: { salonId },
     });
@@ -52,7 +52,7 @@ export class ClientsService {
    * @param updateClientDto Datos a actualizar.
    * @returns Cliente actualizado.
    */
-  async update(id: number, updateClientDto: UpdateClientDto): Promise<Clients> {
+  async update(id: number, updateClientDto: UpdateClientDto): Promise<Client> {
     const client = await this.clientsRepository.preload({
       id,
       ...updateClientDto,

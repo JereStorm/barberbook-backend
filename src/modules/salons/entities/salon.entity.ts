@@ -7,6 +7,9 @@ import {
   OneToMany,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { Appointment } from 'src/modules/appointments/entities/appointment.entity';
+import { Client } from 'src/modules/clients/entities/client.entity';
+import { Service } from 'src/modules/services/entities/service.entity';
 
 @Entity('salons')
 export class Salon {
@@ -28,4 +31,13 @@ export class Salon {
   // Relaciones
   @OneToMany(() => User, (user) => user.salon)
   users: User[];
+
+  @OneToMany(() => Appointment, (appointments) => appointments.salon)
+  appointments: Appointment[];
+  
+  @OneToMany(() => Client, (clients) => clients.salon)
+  clients: Client[];
+
+  @OneToMany(() => Service, (services) => services.salon)
+  services: Service[];
 }

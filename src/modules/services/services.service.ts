@@ -1,15 +1,15 @@
 import { Injectable, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Service } from './entities/service.entity';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Services } from './entities/services.entity';
-import { Repository } from 'typeorm';
 
 @Injectable()
 export class ServicesService {
   constructor(
-    @InjectRepository(Services)
-    private readonly servicesRepository: Repository<Services>,
+    @InjectRepository(Service)
+    private readonly servicesRepository: Repository<Service>,
   ) { }
 
   /**
@@ -17,7 +17,7 @@ export class ServicesService {
    * @param createServiceDto Datos del service a crear.
    * @returns Service creado.
    */
-  async create(createServiceDto: CreateServiceDto): Promise<Services> {
+  async create(createServiceDto: CreateServiceDto): Promise<Service> {
     try {
       // Validar que venga el salonId
       if (!createServiceDto.salonId) {
@@ -50,7 +50,7 @@ export class ServicesService {
      * @param updateServiceDto Datos a actualizar.
      * @returns Service actualizado.
      */
-  async update(id: number, updateServiceDto: UpdateServiceDto): Promise<Services> {
+  async update(id: number, updateServiceDto: UpdateServiceDto): Promise<Service> {
     const service = await this.servicesRepository.preload({
       id,
       ...updateServiceDto,

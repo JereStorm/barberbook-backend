@@ -38,12 +38,68 @@ CREATE TABLE users (
 );
 
 -- ======================
+-- Tabla: CLIENTS
+-- ======================
+CREATE TABLE clients (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    salon_id INT NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    email VARCHAR(150),
+    mobile VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
+);
+
+-- ======================
+-- Tabla: SERVICES
+-- ======================
+CREATE TABLE services (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    salon_id INT NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    duration_min INT NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
+);
+
+-- ======================
+-- Tabla: APPOINTMENTS
+-- ======================
+CREATE TABLE appointments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    salon_id INT NOT NULL,
+    start_time TIMESTAMP NOT NULL,
+    duration_min INT NOT NULL,
+    client_id INT NOT NULL,
+    employee_id INT NULL,
+    service_id INT NOT NULL,
+    status ENUM('pending', 'confirmed', 'canceled', 'completed') DEFAULT 'pending',
+    notes TEXT NULL,
+    created_by INT NOT NULL,
+    updated_by INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_appointments_salon FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE,
+    CONSTRAINT fk_appointments_client FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+    CONSTRAINT fk_appointments_employee FOREIGN KEY (employee_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_appointments_service FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE,
+    CONSTRAINT fk_appointments_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE NO ACTION,
+    CONSTRAINT fk_appointments_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE NO ACTION
+);
+
+-- ======================
 -- Indexes para optimizar búsquedas
 -- ======================
 CREATE INDEX idx_users_salon ON users(salon_id);
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(role);
 CREATE INDEX idx_users_active ON users(is_active);
+CREATE INDEX idx_clients_salon ON clients(salon_id);
+CREATE INDEX idx_services_salon ON services(salon_id);
+CREATE INDEX idx_appointments_salon ON appointments(salon_id);
+CREATE INDEX idx_appointments_status ON appointments(status);
 
 -- ======================
 -- INSERTAR SUPER ADMIN INICIAL (SEED)

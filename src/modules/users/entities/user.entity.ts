@@ -8,10 +8,12 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { UserRole } from '../../../common/enums/user-role.enum';
 import { Salon } from '../../salons/entities/salon.entity';
+import { Appointment } from 'src/modules/appointments/entities/appointment.entity';
 
 @Entity('users')
 export class User {
@@ -63,6 +65,15 @@ export class User {
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'created_by' })
   creator: User;
+
+  @OneToMany(() => Appointment, (appointments) => appointments.employee)
+  appointments: Appointment[];
+
+  @OneToMany(() => Appointment, (appointments) => appointments.createdBy)
+  created: Appointment[];
+
+  @OneToMany(() => Appointment, (appointments) => appointments.updatedBy)
+  updated: Appointment[];
 
   isSuperAdmin(): boolean {
     return this.role === UserRole.SUPER_ADMIN;
