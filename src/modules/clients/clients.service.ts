@@ -1,9 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Client } from './entities/client.entity';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
+import { ClientResponseDto } from './dto/client-response.dto';
+import { plainToInstance } from 'class-transformer';
+import { CurrentUser } from 'src/common/interfaces/current-user.interface';
 
 /**
  * Servicio para la gestión de clientes.
@@ -23,8 +26,14 @@ export class ClientsService {
    * @returns Cliente creado.
    * @throws Error si ocurre un problema al crear el cliente.
    */
-  async create(createClientDto: CreateClientDto): Promise<Client> {
+  async create(createClientDto: CreateClientDto, currentUser: CurrentUser): Promise<Client> {
     try {
+      // TODO: SUPER_ADMIN CASE
+      if (!currentUser.salonId) {
+        throw new ForbiddenException('This user is not associated with any salon');
+      }
+      // Asegurarse de que el cliente se cree en el salón del usuario actual
+      createClientDto.salonId = currentUser.salonId;
       const client = this.clientsRepository.create(createClientDto);
       return await this.clientsRepository.save(client);
     } catch (error) {
@@ -36,13 +45,19 @@ export class ClientsService {
   }
 
   /**
-   * Obtiene todos los clientes de un salón específico.
-   * @param salonId ID del salón.
-   * @returns Lista de clientes.
-   */
-  async findAll(salonId: number): Promise<Client[]> {
-    return await this.clientsRepository.find({
-      where: { salonId },
+     * Obtiene todos los clientes de un salón específico.
+     * @param salonId ID del salón.
+     * @returns Lista de clientes (DTOs).
+     */
+  async findAll(currentUser: CurrentUser): Promise<Client[]> {
+    // TODO: SUPER_ADMIN CASE
+    if (!currentUser.salonId) {
+      throw new ForbiddenException('El usuario no está asociado a ningún salón');
+    }
+
+    return this.clientsRepository.find({
+      where: { salonId: currentUser.salonId },
+      order: { createdAt: 'DESC' },
     });
   }
 
@@ -52,15 +67,47 @@ export class ClientsService {
    * @param updateClientDto Datos a actualizar.
    * @returns Cliente actualizado.
    */
-  async update(id: number, updateClientDto: UpdateClientDto): Promise<Client> {
-    const client = await this.clientsRepository.preload({
-      id,
-      ...updateClientDto,
-    });
-    if (!client) {
-      throw new Error(`Client with id ${id} not found`);
+  async update(id: number, updateClientDto: UpdateClientDto, currentUser: CurrentUser): Promise<Client> {
+    try {
+      // TODO: SUPER_ADMIN CASE
+      if (!currentUser.salonId) {
+        throw new ForbiddenException('This user is not associated with any salon');
+      }
+      // 1- Validaciones previas a la actualización
+      const clientToUpdate = await this.clientsRepository.findOne({ where: { id, salonId: currentUser.salonId } });
+
+      // Si no se encuentra el cliente o no pertenece al mismo salón, lanzar error
+      if (!clientToUpdate) {
+        throw new NotFoundException(`Client with id ${id} not found`);
+      }
+
+      // Asegurarse de que el salonId no se cambie en la actualización
+      if (updateClientDto.salonId && clientToUpdate.salonId !== updateClientDto.salonId) {
+        throw new ForbiddenException('Changing salonId is not allowed');
+      }
+
+      // Verificar si el usuario actual tiene permiso para modificar este cliente
+      if (!this.canModifyClient(currentUser, clientToUpdate)) {
+        throw new ForbiddenException('You are not authorized');
+      }
+
+      // 2- Preload y guardar los cambios
+      const client = await this.clientsRepository.preload({
+        id,
+        ...updateClientDto,
+      });
+
+      // Si por alguna razón no se pudo precargar (aunque ya se validó antes), lanzar error
+      if (!client) {
+        throw new Error(`Client with id ${id} not found`);
+      }
+
+      // Guardar y retornar el cliente actualizado
+      return await this.clientsRepository.save(client);
+    } catch (error) {
+      throw new Error(`Error updating client: ${error?.message || error}`);
     }
-    return await this.clientsRepository.save(client);
+
   }
 
   // ************ Aun por implementar ************
@@ -81,5 +128,10 @@ export class ClientsService {
    */
   findOne(id: number) {
     return `This action returns a #${id} client`;
+  }
+
+  private canModifyClient(currentUser: CurrentUser, client: Client): boolean {
+    // Solo se puede modificar si el cliente pertenece al mismo salón que el usuario actual
+    return currentUser.salonId === client.salonId;
   }
 }
