@@ -4,8 +4,6 @@ import { Repository } from 'typeorm';
 import { Client } from './entities/client.entity';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
-import { ClientResponseDto } from './dto/client-response.dto';
-import { plainToInstance } from 'class-transformer';
 import { CurrentUser } from 'src/common/interfaces/current-user.interface';
 
 /**
@@ -110,15 +108,34 @@ export class ClientsService {
 
   }
 
-  // ************ Aun por implementar ************
-
   /**
    * Elimina un cliente por ID.
    * @param id ID del cliente.
-   * @returns Mensaje de acción (por implementar).
+   * @param currentUser Usuario actual (para validar salonId y permisos).
+   * @returns Cliente eliminado.
    */
-  remove(id: number) {
-    return `This action removes a #${id} client, and yet is unimplemented`;
+  async remove(id: number, currentUser: CurrentUser): Promise<Client> {
+    // Validar asociación de usuario a salón
+    if (!currentUser.salonId) {
+      throw new ForbiddenException('This user is not associated with any salon');
+    }
+
+    // Buscar cliente dentro del mismo salón
+    const client = await this.clientsRepository.findOne({
+      where: { id, salonId: currentUser.salonId },
+    });
+
+    if (!client) {
+      throw new NotFoundException(`Client with id ${id} not found`);
+    }
+
+    // Validar permisos
+    if (!this.canModifyClient(currentUser, client)) {
+      throw new ForbiddenException('You are not authorized');
+    }
+
+    // Eliminar y retornar el cliente eliminado
+    return await this.clientsRepository.remove(client);
   }
 
   /**

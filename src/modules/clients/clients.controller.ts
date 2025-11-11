@@ -136,4 +136,29 @@ export class ClientsController {
       );
     }
   }
+
+  /**
+   * @description Elimina un cliente por su ID.
+   * @route DELETE /clients/:id
+   * @access Solo para usuarios con roles de SUPER_ADMIN, ADMIN o RECEPCIONISTA.
+   */
+  @Delete(':id')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA)
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @GetCurrentUser() currentUser: CurrentUser,
+  ): Promise<{ message: string; id: number }> {
+    try {
+      await this.clientsService.remove(id, currentUser);
+      return { message: 'Client deleted successfully', id };
+    } catch (error) {
+      throw new HttpException(
+        {
+          message: 'Error deleting client',
+          error: error?.message || 'Unexpected error',
+        },
+        error?.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
 }
