@@ -173,10 +173,7 @@ export class ServicesService {
 
     try {
       // TODO: Decidir si aqui se deshabilitara el servicio en lugar de eliminarlo fisicamente
-      // Por ahora, solo lanzo un error para indicar que no está implementado
-      throw new Error('Service removal is not implemented yet');
-      // Si se decidiera eliminar físicamente, se podría usar:
-      // await this.servicesRepository.remove(serviceToRemove);
+      await this.servicesRepository.remove(serviceToRemove);
     } catch (error) {
       throw new InternalServerErrorException(
         `Error removing service: ${error?.message || error}`,

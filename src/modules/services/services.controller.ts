@@ -170,7 +170,7 @@ export class ServicesController {
     } catch (error) {
       throw new HttpException(
         {
-          message: 'Error removing service',
+          message: 'Error removing service' + error.message,
           error: error?.message || 'Unexpected error',
         },
         error?.status || HttpStatus.BAD_REQUEST,
