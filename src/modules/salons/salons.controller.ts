@@ -27,7 +27,7 @@ import { UserRole } from '../../common/enums/user-role.enum';
 // Primero se va a chequear el 'JwtAuthGuard' para validar el token y despues el 'RolesGuard' para ver los permisos.
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class SalonsController {
-  constructor(private readonly salonsService: SalonsService) {}
+  constructor(private readonly salonsService: SalonsService) { }
 
   // Aca manejamos la creacion de salones.
   @Post()
@@ -77,7 +77,7 @@ export class SalonsController {
   // @Roles(UserRole.ADMIN, UserRole.RECEPCIONISTA, UserRole.ESTILISTA)
   async getMyCurrentSalon(@GetCurrentUser() currentUser: CurrentUser) {
     const salon = await this.salonsService.getCurrentUserSalon(currentUser);
-    
+
     // Si el usuario no tiene salon, devolvemos 'null'.
     if (!salon) {
       return null;

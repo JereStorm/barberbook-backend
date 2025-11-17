@@ -7,6 +7,7 @@ import {
   Length,
   Matches,
   IsPhoneNumber,
+  IsNumber,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { UserRole } from '../../../common/enums/user-role.enum';
@@ -37,6 +38,10 @@ export class CreateUserDto {
     }
   )
   password: string;
+
+  @IsOptional()
+  @IsNumber({}, { message: 'El ID del salón debe ser un número' })
+  salonId?: number | null;
 
   @IsEnum(UserRole, { message: 'El rol debe ser válido' })
   role: UserRole;

@@ -22,7 +22,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-  ) {}
+  ) { }
 
   async create(createUserDto: CreateUserDto, currentUser: CurrentUser): Promise<User> {
     if (!this.canCreateRole(currentUser.role, createUserDto.role)) {
@@ -40,10 +40,10 @@ export class UsersService {
     }
 
     let salonId: number | null = null;
-    
+
     if (currentUser.role === UserRole.SUPER_ADMIN) {
       // Super admin puede crear usuarios para cualquier salón
-      salonId = null;
+      salonId = createUserDto.salonId || null;
     } else {
       // Admin y Recepcionista solo pueden crear usuarios para su propio salón
       salonId = currentUser.salonId;
@@ -79,7 +79,7 @@ export class UsersService {
     }
 
     const users = await query.getMany();
-    
+
     // Este log, lo utilice para verificar algo----->borrar despues
     console.log('Usuarios con salon:', users.map(u => ({
       id: u.id,
@@ -198,7 +198,7 @@ export class UsersService {
     if (currentUser.role === UserRole.SUPER_ADMIN) {
       return true;
     }
-    
+
     return currentUser.salonId === targetUser.salonId;
   }
 
