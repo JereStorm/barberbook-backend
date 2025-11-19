@@ -81,12 +81,12 @@ export class UsersService {
     const users = await query.getMany();
 
     // Este log, lo utilice para verificar algo----->borrar despues
-    console.log('Usuarios con salon:', users.map(u => ({
+    /*console.log('Usuarios con salon:', users.map(u => ({
       id: u.id,
       name: u.name,
       salonId: u.salonId,
       salon: u.salon
-    })));
+    })));*/
 
     return users;
   }

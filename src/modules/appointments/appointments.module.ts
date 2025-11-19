@@ -5,9 +5,12 @@ import { AppointmentsService } from './appointments.service';
 import { AppointmentsController } from './appointments.controller';
 import { Client } from 'src/modules/clients/entities/client.entity';
 import { Salon } from '../salons/entities/salon.entity';
+import { Service } from '../services/entities/service.entity';
+import { ServicesModule } from '../services/services.module';
+import { ServicesService } from '../services/services.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Appointment, Client, Salon])],
+  imports: [ServicesModule, TypeOrmModule.forFeature([Appointment, Client, Salon, Service])],
   controllers: [AppointmentsController],
   providers: [AppointmentsService],
   exports: [AppointmentsService],

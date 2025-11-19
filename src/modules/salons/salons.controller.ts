@@ -124,7 +124,7 @@ export class SalonsController {
 
   // Manejamos la actualizacion de un salon.
   @Patch(':id')
-  // @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  // @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN) comentado?
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateSalonDto: UpdateSalonDto,

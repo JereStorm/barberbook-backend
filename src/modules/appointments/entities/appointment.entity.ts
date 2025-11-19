@@ -11,12 +11,19 @@ import { Client } from "src/modules/clients/entities/client.entity";
 import { User } from "src/modules/users/entities/user.entity";
 import { Service } from "src/modules/services/entities/service.entity";
 
-@Index("client_id", ["clientId"], {})
-@Index("created_by", ["createdBy"], {})
-@Index("employee_id", ["employeeId"], {})
 @Index("salon_id", ["salonId"], {})
+@Index("start_time", ["startTime"], {})
+@Index("finish_time", ["finishTime"], {})
+@Index("duration", ["duration"], {})
+@Index("client_id", ["clientId"], {})
+@Index("employee_id", ["employeeId"], {})
 @Index("service_id", ["serviceId"], {})
+@Index("status", ["status"], {})
+@Index("notes", ["notes"], {})
+@Index("created_by", ["createdBy"], {})
 @Index("updated_by", ["updatedBy"], {})
+@Index("created_at", ["createdAt"], {})
+@Index("created_by", ["createdBy"], {})
 @Entity("appointments", { schema: "barberbook" })
 export class Appointment {
   @PrimaryGeneratedColumn({ type: "int", name: "id" })
@@ -28,8 +35,11 @@ export class Appointment {
   @Column("timestamp", { name: "start_time" })
   startTime: Date;
 
-  @Column("int", { name: "duration_min" })
-  durationMin: number;
+  @Column("timestamp", { name: "finish_time" })
+  finishTime: Date;
+
+  @Column("int", { name: "duration" })
+  duration: number;
 
   @Column("int", { name: "client_id" })
   clientId: number;
@@ -43,10 +53,22 @@ export class Appointment {
   @Column("enum", {
     name: "status",
     nullable: true,
-    enum: ["pending", "confirmed", "canceled", "completed"],
-    default: "pending",
+    enum: [
+      "activo",
+      "pendiente",
+      "confirmado",
+      "cancelado",
+      "completado",
+    ],
+    default: "activo",
   })
-  status: "pending" | "confirmed" | "canceled" | "completed" | null;
+  status:
+    | "activo"
+    | "pendiente"
+    | "confirmado"
+    | "cancelado"
+    | "completado"
+    | null;
 
   @Column("text", { name: "notes", nullable: true })
   notes: string | null;
@@ -90,7 +112,7 @@ export class Appointment {
     onUpdate: "NO ACTION",
   })
   @JoinColumn([{ name: "employee_id", referencedColumnName: "id" }])
-  employee: User;
+  employee: User | null;
 
   @ManyToOne(() => Service, (services) => services.appointments, {
     onDelete: "CASCADE",
@@ -111,5 +133,5 @@ export class Appointment {
     onUpdate: "NO ACTION",
   })
   @JoinColumn([{ name: "updated_by", referencedColumnName: "id" }])
-  updatedByUser: User;
+  updatedByUser: User | null;
 }

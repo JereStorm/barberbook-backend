@@ -10,59 +10,79 @@ import {
   ParseIntPipe,
   HttpStatus,
   Patch,
-} from "@nestjs/common";
-import { AppointmentsService } from "./appointments.service";
-import { CreateAppointmentDto } from "./dto/create-appointment.dto";
-import { UpdateAppointmentDto } from "./dto/update-appointment.dto";
+  UseGuards,
+} from '@nestjs/common';
+import { AppointmentsService } from './appointments.service';
+import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { UpdateAppointmentDto } from './dto/update-appointment.dto';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { UserRole } from 'src/common/enums/user-role.enum';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { User } from '../users/entities/user.entity';
+import { type CurrentUser } from 'src/common/interfaces/current-user.interface';
+import { GetCurrentUser } from 'src/common/decorators/current-user.decorator';
+import { AppointmentResponseDto } from './dto/appointment-response.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Controller('appointments')
-
+// Con '@UseGuards' le decimos a nest que todas las rutas de este controlador van a pasar por estos dos guards.
+// Primero se va a chequear el 'JwtAuthGuard' para validar el token y despues el 'RolesGuard' para ver los permisos.
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
 
-  @Get('employee/:id')
-  //Falta verificacion que el usuario logueado sea el que unicamente pueda ver sus turnos
-  async getAppointmentsByViewer(@Param('id', ParseIntPipe) userId: number) {
-    const appointments = await this.appointmentsService.findAllByViewer(Number(userId));
-
+  @Post()
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA)
+  async create(
+    @Body() createAppointmentDto: CreateAppointmentDto,
+    @GetCurrentUser() currentUser: CurrentUser,
+  ) {
+    const appointments = await this.appointmentsService.create(
+      createAppointmentDto,
+      currentUser,
+    );
+    console.log(appointments)
     return {
-      message: 'Appointments By User Fetched Successfully',
-      data: appointments,
-    };
-  }
-
-  @Get('salon/:id')
-  async getAllByAdmin(@Param('id', ParseIntPipe) salonId: number) {
-    const appointments = await this.appointmentsService.findAllByAdmin(Number(salonId));
-
-    return {
-      message: 'Appointments Fetched Successfully',
+      message: 'Turno Creado correctamente',
+      
+      
       data: appointments,
     };
   }
 
   @Get()
-  async findAll() {
-    return await this.appointmentsService.findAll();
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA)
+
+  async findAll(@GetCurrentUser() currentUser: CurrentUser): Promise<AppointmentResponseDto[]> {
+    if (!currentUser.salonId) {
+      throw new HttpException(
+        { message: 'Missing salonId in current user' },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const appointments = await this.appointmentsService.findAll(currentUser);
+    return plainToInstance(AppointmentResponseDto, appointments, { excludeExtraneousValues: true });
   }
-  
-  @Get(":id")
+
+  @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
     const appointment = await this.appointmentsService.findOne(id);
-    
+
     return {
       message: 'Appointment Fetched Successfully',
       data: appointment,
     };
   }
-  
-  @Post()
-  async create(@Body() dto: CreateAppointmentDto) {
-    return await this.appointmentsService.create(dto);
-  }
 
-  @Put(":id")
-  async update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateAppointmentDto) {
+  @Patch(':id')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA)
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateAppointmentDto,
+    @GetCurrentUser() currentUser: CurrentUser,
+  ) {
     const appointment = await this.appointmentsService.update(id, dto);
 
     return {
@@ -71,18 +91,29 @@ export class AppointmentsController {
     };
   }
 
-  @Patch(':id/cancel')
-    async cancelAppointment(@Param('id', ParseIntPipe) id: number) {
-    const appointment = await this.appointmentsService.cancel(id);
+  @Patch('cancel/:id')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA)
+  async cancelAppointment(
+    @Param('id', ParseIntPipe) id: number,
+    @GetCurrentUser() currentUser: CurrentUser,
+  ) {
+    
+      const appointment = await this.appointmentsService.cancel(id);
 
-    return {
-      message: 'Appointment Canceled Successfully',
-      data: appointment,
-    };
+      return {
+        message: 'Appointment Canceled Successfully',
+        data: appointment,
+      };
+    
   }
 
-  @Delete(":id")
-  async remove(@Param('id', ParseIntPipe) id: number) {
+  @Delete(':id')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA)
+
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @GetCurrentUser() currentUser: CurrentUser,
+  ) {
     const appointment = await this.appointmentsService.remove(id);
 
     return {
@@ -90,5 +121,17 @@ export class AppointmentsController {
       data: appointment,
     };
   }
+  @Delete()
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA)
 
+  async removeAll(
+    @GetCurrentUser() currentUser: CurrentUser,
+  ) {
+    const appointment = await this.appointmentsService.removeAll();
+
+    return {
+      message: 'Appointments Deleted Successfully',
+      data: appointment,
+    };
+  }
 }
