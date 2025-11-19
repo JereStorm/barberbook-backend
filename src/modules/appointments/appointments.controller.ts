@@ -23,7 +23,8 @@ import { User } from '../users/entities/user.entity';
 import { type CurrentUser } from 'src/common/interfaces/current-user.interface';
 import { GetCurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AppointmentResponseDto } from './dto/appointment-response.dto';
-import { plainToInstance } from 'class-transformer';
+import { plainToClass, plainToInstance } from 'class-transformer';
+import { App } from 'supertest/types';
 
 @Controller('appointments')
 // Con '@UseGuards' le decimos a nest que todas las rutas de este controlador van a pasar por estos dos guards.
@@ -42,19 +43,19 @@ export class AppointmentsController {
       createAppointmentDto,
       currentUser,
     );
-    console.log(appointments)
+    console.log(appointments);
     return {
       message: 'Turno Creado correctamente',
-      
-      
+
       data: appointments,
     };
   }
 
   @Get()
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA)
-
-  async findAll(@GetCurrentUser() currentUser: CurrentUser): Promise<AppointmentResponseDto[]> {
+  async findAll(
+    @GetCurrentUser() currentUser: CurrentUser,
+  ): Promise<AppointmentResponseDto[]> {
     if (!currentUser.salonId) {
       throw new HttpException(
         { message: 'Missing salonId in current user' },
@@ -63,17 +64,30 @@ export class AppointmentsController {
     }
 
     const appointments = await this.appointmentsService.findAll(currentUser);
-    return plainToInstance(AppointmentResponseDto, appointments, { excludeExtraneousValues: true });
+    return plainToInstance(AppointmentResponseDto, appointments, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number) {
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.ADMIN,
+    UserRole.RECEPCIONISTA,
+    UserRole.ESTILISTA,
+  )
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<AppointmentResponseDto> {
     const appointment = await this.appointmentsService.findOne(id);
 
-    return {
-      message: 'Appointment Fetched Successfully',
-      data: appointment,
-    };
+    if (!appointment) {
+      throw new HttpException('Appointment not found', HttpStatus.NOT_FOUND);
+    }
+
+    return plainToClass(AppointmentResponseDto, appointment, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Patch(':id')
@@ -82,13 +96,27 @@ export class AppointmentsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateAppointmentDto,
     @GetCurrentUser() currentUser: CurrentUser,
-  ) {
-    const appointment = await this.appointmentsService.update(id, dto);
+  ): Promise<AppointmentResponseDto> {
+    try {
+      const updatedAppointment = await this.appointmentsService.update(
+        id,
+        dto,
+        currentUser,
+      );
 
-    return {
-      message: 'Appointment Modified Successfully',
-      data: appointment,
-    };
+      return plainToInstance(AppointmentResponseDto, updatedAppointment, {
+        excludeExtraneousValues: true,
+      });
+
+    } catch (error) {
+      throw new HttpException(
+        {
+          message: 'Error updating Appointment',
+          error: error?.message || 'Unexpected error',
+        },
+        error?.status || HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 
   @Patch('cancel/:id')
@@ -97,19 +125,16 @@ export class AppointmentsController {
     @Param('id', ParseIntPipe) id: number,
     @GetCurrentUser() currentUser: CurrentUser,
   ) {
-    
-      const appointment = await this.appointmentsService.cancel(id);
+    const appointment = await this.appointmentsService.cancel(id);
 
-      return {
-        message: 'Appointment Canceled Successfully',
-        data: appointment,
-      };
-    
+    return {
+      message: 'Appointment Canceled Successfully',
+      data: appointment,
+    };
   }
 
   @Delete(':id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA)
-
   async remove(
     @Param('id', ParseIntPipe) id: number,
     @GetCurrentUser() currentUser: CurrentUser,
@@ -123,10 +148,7 @@ export class AppointmentsController {
   }
   @Delete()
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA)
-
-  async removeAll(
-    @GetCurrentUser() currentUser: CurrentUser,
-  ) {
+  async removeAll(@GetCurrentUser() currentUser: CurrentUser) {
     const appointment = await this.appointmentsService.removeAll();
 
     return {

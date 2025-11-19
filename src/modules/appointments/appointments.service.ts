@@ -1,6 +1,7 @@
 import {
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { Between, LessThan, MoreThan, Repository } from 'typeorm';
@@ -63,10 +64,8 @@ export class AppointmentsService {
     ) {
       throw new ForbiddenException('No tiene permisos para crear un turno');
     }
-    
-    const service = await this.service.findOne(dto.serviceId, currentUser);
 
-    this.setFinishTime(dto, service.durationMin);
+    const service = await this.service.findOne(dto.serviceId, currentUser);
 
     if (!service) {
       throw new NotFoundException(
@@ -74,15 +73,17 @@ export class AppointmentsService {
       );
     }
     
-    dto.duration = service.durationMin;
+    this.setFinishTime(dto, service);
 
     if (dto.employeeId) {
-      if(await this.checkDisponibility(dto)) {
-        throw new ForbiddenException('El empleado no está disponible en este horario');
+      if (await this.checkDisponibility(dto)) {
+        throw new ForbiddenException(
+          'El empleado no está disponible en este horario',
+        );
       }
     }
 
-    console.log('create',dto);
+    console.log('create', dto);
 
     const appointment = this.appointmentsRepository.create(dto);
     return await this.appointmentsRepository.save(appointment);
@@ -115,10 +116,52 @@ export class AppointmentsService {
     return appointment;
   }
 
-  async update(id: number, dto: UpdateAppointmentDto) {
-    const appointment = await this.findOne(id);
-    Object.assign(appointment, dto);
-    return await this.appointmentsRepository.save(appointment);
+  async update(
+    id: number,
+    dto: UpdateAppointmentDto,
+    currentUser: CurrentUser,
+  ): Promise<Appointment> {
+
+    if (!currentUser.salonId) {
+      throw new ForbiddenException('This user is not associated with any salon');
+    }
+
+    const appointment = await this.appointmentsRepository.findOne({
+      where: { id, salonId: currentUser.salonId },
+    });
+
+    if(appointment && appointment.serviceId !== dto.serviceId){
+      const service = await this.service.findOne(dto.serviceId!, currentUser);
+      this.setFinishTime(dto, service);
+    }
+
+    if (!appointment) {
+      throw new NotFoundException(`Appointment with ID ${id} not found`);
+    }
+
+    try {
+      const updatedAppointment = await this.appointmentsRepository.preload({
+        id,
+        ...dto,
+      });
+
+      if (!updatedAppointment) {
+        throw new NotFoundException(`Cant update Appointment with ID ${id}`);
+      }
+
+      return await this.appointmentsRepository.save(updatedAppointment);
+    } catch (error) {
+      // Si la excepción ya es de Nest.js, la relanzamos. Si no, lanzamos una genérica.
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ForbiddenException
+      ) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        `Error updating appointment: ${error?.message || error}`,
+      );
+    }
   }
 
   async remove(id: number) {
@@ -145,10 +188,11 @@ export class AppointmentsService {
   }
 
   //calculations
-  private async setFinishTime(dto: CreateAppointmentDto, duration: number) {
-    const startTime = new Date(dto.startTime);
-    const finishTime = new Date(startTime.getTime() + duration * 60000);
+  private async setFinishTime(dto: UpdateAppointmentDto, service: Service) {
+    const startTime = new Date(dto.startTime!);
+    const finishTime = new Date(startTime.getTime() + service.durationMin * 60000);
     dto.finishTime = finishTime.toISOString();
+    dto.duration = service.durationMin;
   }
 
   //validations
@@ -164,12 +208,12 @@ export class AppointmentsService {
       where: {
         employeeId: dto.employeeId,
         startTime: LessThan(new Date(dto.finishTime)),
-        finishTime: MoreThan(new Date(dto.startTime))
+        finishTime: MoreThan(new Date(dto.startTime)),
       },
     });
 
-    console.log('validity',result);
+    console.log('validity', result);
 
-    return result ? true : false; 
+    return result ? true : false;
   }
 }

@@ -1,7 +1,6 @@
 import { Expose, Transform, Type } from 'class-transformer';
 import { AppointmentStatus } from 'src/common/enums/appointment-status.enum';
 import { ServiceResponseDto } from 'src/modules/services/dto/service-response.dto';
-import { Service } from 'src/modules/services/entities/service.entity';
 
 export class AppointmentResponseDto {
   @Expose()
