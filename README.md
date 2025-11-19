@@ -109,6 +109,7 @@ Participan estudiantes, tutora y profesora, aplicando buenas prácticas de desar
 * 📁 [Google Drive](https://drive.google.com/drive/folders/1iNgk87ktPxIVHVjKhX8JX5RhkVyxDoiI?usp=sharing)
 * 🗂 [Jira – Gestión del proyecto](https://proyecto-fip-grupo-28.atlassian.net/jira/software/projects/SCRUM/boards/1/backlog)
 * 🎨 [Figma – Maquetado UI](https://www.figma.com/design/wnLUC1FCfYv7Dk45079Jni/Maquetado?node-id=0-1)
+* [Postman](https://solar-station-957438.postman.co/workspace/My-Workspace~c3bd3ea0-6871-4e10-867e-49ea4891ec47/collection/21908760-0eb112fc-d643-4811-92ab-9a5df88f1abe?action=share&creator=21908760)
 
 ---
 
