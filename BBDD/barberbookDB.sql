@@ -94,7 +94,7 @@ ALTER TABLE appointments
 MODIFY status ENUM('activo', 'pendiente', 'confirmado', 'cancelado', 'completado')
 DEFAULT 'pendiente';
 
---Modificaciones para agregar finish_time y renombrar duration_min a duration
+-- Modificaciones para agregar finish_time y renombrar duration_min a duration
 ALTER TABLE appointments
 ADD COLUMN finish_time TIMESTAMP NOT NULL AFTER updated_at,
 CHANGE COLUMN duration_min duration INT NOT NULL ;
