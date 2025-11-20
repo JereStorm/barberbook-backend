@@ -26,13 +26,26 @@ import { AppointmentResponseDto } from './dto/appointment-response.dto';
 import { plainToClass, plainToInstance } from 'class-transformer';
 import { App } from 'supertest/types';
 
+/**
+ * Controlador para la gestión de turnos/citas.
+ * Provee endpoints para crear, obtener, actualizar, cancelar y eliminar turnos.
+ * Todos los endpoints requieren autenticación JWT y validación de roles.
+ */
 @Controller('appointments')
-// Con '@UseGuards' le decimos a nest que todas las rutas de este controlador van a pasar por estos dos guards.
-// Primero se va a chequear el 'JwtAuthGuard' para validar el token y despues el 'RolesGuard' para ver los permisos.
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AppointmentsController {
-  constructor(private readonly appointmentsService: AppointmentsService) {}
+  constructor(private readonly appointmentsService: AppointmentsService) { }
 
+  /**
+   * @description Crea un nuevo turno.
+   * @route POST /appointments
+   * @access Solo para SUPER_ADMIN, ADMIN y RECEPCIONISTA.
+   * @param createAppointmentDto Datos del turno a crear.
+   * @param currentUser Usuario autenticado que realiza la solicitud.
+   * @returns Objeto con mensaje de confirmación y datos del turno creado.
+   * @throws ForbiddenException Si el usuario no tiene permisos.
+   * @throws NotFoundException Si el servicio no existe.
+   */
   @Post()
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA)
   async create(
@@ -43,14 +56,20 @@ export class AppointmentsController {
       createAppointmentDto,
       currentUser,
     );
-    console.log(appointments);
     return {
       message: 'Turno Creado correctamente',
-
       data: appointments,
     };
   }
 
+  /**
+   * @description Obtiene todos los turnos del salón del usuario autenticado.
+   * @route GET /appointments
+   * @access Solo para SUPER_ADMIN, ADMIN y RECEPCIONISTA.
+   * @param currentUser Usuario autenticado (para obtener su salonId).
+   * @returns Array de turnos en formato AppointmentResponseDto.
+   * @throws HttpException Si el usuario no tiene un salonId asignado.
+   */
   @Get()
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA)
   async findAll(
@@ -69,6 +88,14 @@ export class AppointmentsController {
     });
   }
 
+  /**
+   * @description Obtiene un turno específico por ID.
+   * @route GET /appointments/:id
+   * @access SUPER_ADMIN, ADMIN, RECEPCIONISTA y ESTILISTA.
+   * @param id ID del turno.
+   * @returns Turno en formato AppointmentResponseDto.
+   * @throws HttpException Si el turno no existe.
+   */
   @Get(':id')
   @Roles(
     UserRole.SUPER_ADMIN,
@@ -90,6 +117,16 @@ export class AppointmentsController {
     });
   }
 
+  /**
+   * @description Actualiza un turno existente.
+   * @route PATCH /appointments/:id
+   * @access Solo para SUPER_ADMIN, ADMIN y RECEPCIONISTA.
+   * @param id ID del turno a actualizar.
+   * @param dto Datos a actualizar del turno.
+   * @param currentUser Usuario autenticado que realiza la solicitud.
+   * @returns Turno actualizado en formato AppointmentResponseDto.
+   * @throws HttpException Si hay error en la actualización.
+   */
   @Patch(':id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA)
   async update(
@@ -119,6 +156,15 @@ export class AppointmentsController {
     }
   }
 
+  /**
+   * @description Cancela un turno (cambia su estado a "cancelado" sin eliminarlo).
+   * @route PATCH /appointments/cancel/:id
+   * @access Solo para SUPER_ADMIN, ADMIN y RECEPCIONISTA.
+   * @param id ID del turno a cancelar.
+   * @param currentUser Usuario autenticado que realiza la solicitud.
+   * @returns Objeto con mensaje de confirmación y datos del turno cancelado.
+   * @throws NotFoundException Si el turno no existe.
+   */
   @Patch('cancel/:id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA)
   async cancelAppointment(
@@ -133,19 +179,38 @@ export class AppointmentsController {
     };
   }
 
+  /**
+   * @description Elimina un turno por ID.
+   * @route DELETE /appointments/:id
+   * @access Solo para SUPER_ADMIN, ADMIN y RECEPCIONISTA.
+   * @param id ID del turno a eliminar.
+   * @param currentUser Usuario autenticado que realiza la solicitud.
+   * @returns Objeto con mensaje de confirmación y datos del turno eliminado.
+   * @throws ForbiddenException Si el usuario no tiene permiso.
+   * @throws NotFoundException Si el turno no existe.
+   */
   @Delete(':id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA)
   async remove(
     @Param('id', ParseIntPipe) id: number,
     @GetCurrentUser() currentUser: CurrentUser,
   ) {
-    const appointment = await this.appointmentsService.remove(id);
+    const appointment = await this.appointmentsService.remove(id, currentUser);
 
     return {
       message: 'Appointment Deleted Successfully',
       data: appointment,
     };
   }
+
+  /**
+   * @description Elimina todos los turnos (uso administrativo/testing).
+   * @route DELETE /appointments
+   * @access Solo para SUPER_ADMIN, ADMIN y RECEPCIONISTA.
+   * @param currentUser Usuario autenticado que realiza la solicitud.
+   * @returns Objeto con mensaje de confirmación.
+   * @warning Esta acción elimina TODOS los turnos de la base de datos.
+   */
   @Delete()
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA)
   async removeAll(@GetCurrentUser() currentUser: CurrentUser) {
