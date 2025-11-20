@@ -1,6 +1,8 @@
 import { Expose, Transform, Type } from 'class-transformer';
 import { AppointmentStatus } from 'src/common/enums/appointment-status.enum';
+import { ClientResponseDto } from 'src/modules/clients/dto/client-response.dto';
 import { ServiceResponseDto } from 'src/modules/services/dto/service-response.dto';
+import { UserResponseDto } from 'src/modules/users/dto/user-response.dto';
 
 export class AppointmentResponseDto {
   @Expose()
@@ -40,14 +42,37 @@ export class AppointmentResponseDto {
 
   @Expose()
   @Type(() => ServiceResponseDto)
-   @Transform(({ value }) => {
-     if (!value) return null;
-     return {
-       id: value.id,
-       name: value.name,
-       durationMin: value.duration_min,
-       price: value.price,
-     };
-   })
-   service: ServiceResponseDto | null;
+  @Transform(({ value }) => {
+    if (!value) return null;
+    return {
+      id: value.id,
+      name: value.name,
+      durationMin: value.duration_min,
+      price: value.price,
+    };
+  })
+  service: ServiceResponseDto | null;
+
+  @Expose()
+  @Type(() => ClientResponseDto)
+  @Transform(({ value }) => {
+    if (!value) return null;
+    return {
+      id: value.id,
+      name: value.name,
+      mobile: value.mobile
+    };
+  })
+  client: ClientResponseDto | null;
+
+  @Expose()
+  @Type(() => UserResponseDto)
+  @Transform(({ value }) => {
+    if (!value) return null;
+    return {
+      id: value.id,
+      name: value.name,
+    };
+  })
+  employee: UserResponseDto | null;
 }
