@@ -3,6 +3,9 @@ import { AppointmentStatus } from 'src/common/enums/appointment-status.enum';
 import { ClientResponseDto } from 'src/modules/clients/dto/client-response.dto';
 import { ServiceResponseDto } from 'src/modules/services/dto/service-response.dto';
 import { UserResponseDto } from 'src/modules/users/dto/user-response.dto';
+import { ClientAppointmentDto } from './client-appointment.dto';
+import { EmployeeAppointmentDto } from './employee-appointment.dto';
+import { ServiceAppointmentDto } from './service-appointment.dto';
 
 export class AppointmentResponseDto {
   @Expose()
@@ -41,20 +44,22 @@ export class AppointmentResponseDto {
   createdBy: number | null;
 
   @Expose()
-  @Type(() => ServiceResponseDto)
+  @Type(() => ServiceAppointmentDto)
   @Transform(({ value }) => {
     if (!value) return null;
     return {
       id: value.id,
+      salonId: value.salon_id,
       name: value.name,
       durationMin: value.duration_min,
       price: value.price,
+      isActive: value.is_active,
     };
   })
-  service: ServiceResponseDto | null;
+  service: ServiceAppointmentDto | null;
 
   @Expose()
-  @Type(() => ClientResponseDto)
+  @Type(() => ClientAppointmentDto)
   @Transform(({ value }) => {
     if (!value) return null;
     return {
@@ -63,16 +68,20 @@ export class AppointmentResponseDto {
       mobile: value.mobile
     };
   })
-  client: ClientResponseDto | null;
+  client: ClientAppointmentDto | null;
 
   @Expose()
-  @Type(() => UserResponseDto)
+  @Type(() => EmployeeAppointmentDto)
   @Transform(({ value }) => {
     if (!value) return null;
     return {
       id: value.id,
       name: value.name,
+      email: value.email,
+      mobile: value.mobile,
+      salonId: value.salonId,
+      isActive: value.isActive,
     };
   })
-  employee: UserResponseDto | null;
+  employee: EmployeeAppointmentDto | null;
 }
