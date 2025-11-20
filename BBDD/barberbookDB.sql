@@ -141,7 +141,7 @@ VALUES (
     1, 
     'Juan Pérez',
     'admin@salonelegante.com', 
-    '+54 11 8765-4321',
+    '+541187654321',
     '$2b$10$hv5oMu5hbP9mGW2ZUE5ib.R//Ly3kL24O8hlbviHic299P1EsgZj6', -- SuperAdmin123!
     'admin', 
     TRUE,
@@ -154,7 +154,7 @@ VALUES (
     1, 
     'María González',
     'maria@salonelegante.com', 
-    '+54 11 5555-1234',
+    '+541155551234',
     '$2b$10$hv5oMu5hbP9mGW2ZUE5ib.R//Ly3kL24O8hlbviHic299P1EsgZj6', -- SuperAdmin123!
     'recepcionista', 
     TRUE,
@@ -167,7 +167,7 @@ VALUES (
     1, 
     'Carlos Rodríguez',
     'carlos@salonelegante.com', 
-    '+54 11 9999-8888',
+    '+541199998888',
     '$2b$10$hv5oMu5hbP9mGW2ZUE5ib.R//Ly3kL24O8hlbviHic299P1EsgZj6', -- SuperAdmin123!
     'estilista', 
     TRUE,
