@@ -104,6 +104,7 @@ export class AppointmentsService {
     const data = await this.appointmentsRepository.find({
       relations: ['client', 'employee', 'service'],
       where: { salonId: currentUser.salonId },
+      order: { startTime: 'ASC' },
     });
 
     return data;
