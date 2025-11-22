@@ -4,6 +4,11 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
+
+  //Lo agregue para el nuevo esquema de servicios y turnos
+  ManyToMany,
+  JoinTable,
+
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { Salon } from "src/modules/salons/entities/salon.entity";
@@ -17,13 +22,11 @@ import { Service } from "src/modules/services/entities/service.entity";
 @Index("duration", ["duration"], {})
 @Index("client_id", ["clientId"], {})
 @Index("employee_id", ["employeeId"], {})
-@Index("service_id", ["serviceId"], {})
 @Index("status", ["status"], {})
-@Index("notes", ["notes"], {})
+//@Index("notes", ["notes"], {}) -> Lo deje no indexado
 @Index("created_by", ["createdBy"], {})
 @Index("updated_by", ["updatedBy"], {})
 @Index("created_at", ["createdAt"], {})
-@Index("created_by", ["createdBy"], {})
 @Entity("appointments", { schema: "barberbook" })
 export class Appointment {
   @PrimaryGeneratedColumn({ type: "int", name: "id" })
@@ -39,16 +42,17 @@ export class Appointment {
   finishTime: Date;
 
   @Column("int", { name: "duration" })
-  duration: number;
+  duration: number; 
+
+  // Columna para congelar el precio total
+  @Column("decimal", { precision: 10, scale: 2, default: 0, name: "total_price" })
+  totalPrice: number;
 
   @Column("int", { name: "client_id" })
   clientId: number;
 
   @Column("int", { name: "employee_id", nullable: true })
   employeeId: number | null;
-
-  @Column("int", { name: "service_id" })
-  serviceId: number;
 
   @Column("enum", {
     name: "status",
@@ -114,12 +118,20 @@ export class Appointment {
   @JoinColumn([{ name: "employee_id", referencedColumnName: "id" }])
   employee: User | null;
 
-  @ManyToOne(() => Service, (services) => services.appointments, {
-    onDelete: "CASCADE",
-    onUpdate: "NO ACTION",
+  // RELACION MUCHOS A MUCHOS 
+  @ManyToMany(() => Service)
+  @JoinTable({
+    name: "appointments_services",
+    joinColumn: {
+      name: "appointment_id",
+      referencedColumnName: "id",
+    },
+    inverseJoinColumn: {
+      name: "service_id",
+      referencedColumnName: "id",
+    },
   })
-  @JoinColumn([{ name: "service_id", referencedColumnName: "id" }])
-  service: Service;
+  services: Service[];
 
   @ManyToOne(() => User, (users) => users.createdBy, {
     onDelete: "NO ACTION",
