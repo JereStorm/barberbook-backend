@@ -1,8 +1,5 @@
 import { Expose, Transform, Type } from 'class-transformer';
 import { AppointmentStatus } from 'src/common/enums/appointment-status.enum';
-import { ClientResponseDto } from 'src/modules/clients/dto/client-response.dto';
-import { ServiceResponseDto } from 'src/modules/services/dto/service-response.dto';
-import { UserResponseDto } from 'src/modules/users/dto/user-response.dto';
 import { ClientAppointmentDto } from './client-appointment.dto';
 import { EmployeeAppointmentDto } from './employee-appointment.dto';
 import { ServiceAppointmentDto } from './service-appointment.dto';
@@ -25,14 +22,16 @@ export class AppointmentResponseDto {
   @Expose()
   duration: number;
 
+  // Ahora los turnos se muestran con el precio total (suma del costo de los servicios individuales)
+  @Expose()
+  totalPrice: number;
+
   @Expose()
   clientId: number;
 
   @Expose()
   employeeId: number | null;
 
-  @Expose()
-  serviceId: number;
 
   @Expose()
   status: AppointmentStatus | null;
@@ -43,20 +42,10 @@ export class AppointmentResponseDto {
   @Expose()
   createdBy: number | null;
 
+  // Un turno puede tener varios servicios, pasamos a tener un array de servicios
   @Expose()
-  @Type(() => ServiceAppointmentDto)
-  @Transform(({ value }) => {
-    if (!value) return null;
-    return {
-      id: value.id,
-      salonId: value.salon_id,
-      name: value.name,
-      durationMin: value.duration_min,
-      price: value.price,
-      isActive: value.is_active,
-    };
-  })
-  service: ServiceAppointmentDto | null;
+  @Type(() => ServiceAppointmentDto) 
+  services: ServiceAppointmentDto[]; 
 
   @Expose()
   @Type(() => ClientAppointmentDto)
