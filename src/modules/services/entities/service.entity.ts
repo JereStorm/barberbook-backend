@@ -7,6 +7,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
+  ManyToMany, //Relacion manytomany necesaria!
   PrimaryGeneratedColumn,
 } from "typeorm";
 
@@ -36,7 +37,7 @@ export class Service {
   })
   isActive: boolean | null;
 
-  @OneToMany(() => Appointment, (appointments) => appointments.service)
+  @ManyToMany(() => Appointment, (appointment) => appointment.services) // Ahora se utiliza services (service------>services)
   appointments: Appointment[];
 
   @ManyToOne(() => Salon, (salons) => salons.services, {
