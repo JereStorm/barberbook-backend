@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { Between, LessThan, MoreThan, Repository } from 'typeorm';
+import { Between, In, LessThan, MoreThan, Repository } from 'typeorm'; // <--- Importar 'In'
 import { InjectRepository } from '@nestjs/typeorm';
 import { Appointment } from './entities/appointment.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
@@ -12,31 +12,24 @@ import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { CurrentUser } from 'src/common/interfaces/current-user.interface';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { Service } from '../services/entities/service.entity';
-import { ServicesService } from '../services/services.service';
 
-/**
- * Servicio para la gestión de turnos/citas.
- * Provee métodos para crear, obtener, actualizar, cancelar y eliminar turnos.
- */
 @Injectable()
 export class AppointmentsService {
   constructor(
     @InjectRepository(Appointment)
-    @InjectRepository(Service)
     private readonly appointmentsRepository: Repository<Appointment>,
-    private readonly service: ServicesService,
-  ) { }
+    
+    // Inyectamos el repositorio de Servicios directamente para buscar por lista de IDs
+    @InjectRepository(Service)
+    private readonly servicesRepository: Repository<Service>,
+  ) {}
 
-  /**
-   * Obtiene todos los turnos de un empleado específico.
-   * @param employeeId ID del empleado.
-   * @returns Array de turnos del empleado ordenados por hora de inicio.
-   * @throws NotFoundException Si no se encuentran turnos para el empleado.
-   */
+  // --- FIND ALL BY EMPLOYEE ---
   async findAllByEmployee(employeeId: number): Promise<Appointment[]> {
     const appointments = await this.appointmentsRepository.find({
       where: { employeeId },
-      relations: ['client', 'service', 'salon'],
+      // Revisar esto, cambie "service" por "services"------>muchos servicios
+      relations: ['client', 'services', 'salon', 'employee'], 
       order: { startTime: 'ASC' },
     });
 
@@ -48,15 +41,7 @@ export class AppointmentsService {
     return appointments;
   }
 
-  /**
-   * Crea un nuevo turno.
-   * Valida permisos, disponibilidad del empleado y duración del servicio.
-   * @param dto DTO con datos del turno a crear.
-   * @param currentUser Usuario autenticado que realiza la solicitud.
-   * @returns Turno creado.
-   * @throws ForbiddenException Si el usuario no tiene permisos o el empleado no está disponible.
-   * @throws NotFoundException Si el servicio no existe.
-   */
+  // --- CREATE ---
   async create(
     dto: CreateAppointmentDto,
     currentUser: CurrentUser,
@@ -68,41 +53,63 @@ export class AppointmentsService {
       throw new ForbiddenException('No tiene permisos para crear un turno');
     }
 
-    const service = await this.service.findOne(dto.serviceId, currentUser);
+    // Buscar TODOS los servicios seleccionados por sus IDs
+    // Usamos el operador In([]) para buscar varios a la vez
+    const services = await this.servicesRepository.findBy({
+      id: In(dto.serviceIds),
+    });
 
-    if (!service) {
-      throw new NotFoundException(
-        `Service with ID ${dto.serviceId} not found or does not belong to your salon`,
-      );
+    // Validar si se encontraron todos
+    if (!services || services.length === 0) {
+      throw new NotFoundException('No se encontraron los servicios seleccionados');
     }
 
-    this.setFinishTime(dto, service);
+    // Validar que los servicios pertenezcan al mismo salon
+    const invalidService = services.find(s => s.salonId !== dto.salonId);
+    if (invalidService) {
+        throw new ForbiddenException(`El servicio ${invalidService.name} no pertenece a este salón`);
+    }
 
+    // Crear la instancia del turno
+    const appointment = this.appointmentsRepository.create(dto);
+
+    // Calcular Duración Total y Precio Total
+    // Usamos reduce para sumar
+    const totalDurationMin = services.reduce((sum, s) => sum + s.durationMin, 0);
+    const totalPrice = services.reduce((sum, s) => sum + Number(s.price), 0);
+
+    // Setear datos calculados
+    appointment.duration = totalDurationMin;
+    appointment.totalPrice = totalPrice;
+    appointment.services = services; // Asignamos la relación ManyToMany
+
+    // Calcular hora de fin
+    const startTime = new Date(dto.startTime);
+    const finishTime = new Date(startTime.getTime() + totalDurationMin * 60000);
+    appointment.finishTime = finishTime;
+
+    // Validar Disponibilidad
     if (dto.employeeId) {
-      if (await this.checkDisponibility(dto)) {
+      // Pasamos el finishTime calculado para validar
+      if (await this.checkDisponibility(dto.employeeId, startTime, finishTime)) {
         throw new ForbiddenException(
           'El empleado no está disponible en este horario',
         );
       }
     }
 
-    const appointment = this.appointmentsRepository.create(dto);
     return await this.appointmentsRepository.save(appointment);
   }
 
-  /**
-   * Obtiene todos los turnos de un salón específico.
-   * @param currentUser Usuario autenticado (para obtener su salonId).
-   * @returns Array de turnos del salón con relaciones cargadas.
-   * @throws ForbiddenException Si el usuario no tiene un salón asignado.
-   */
+  // --- FIND ALL ---
   async findAll(currentUser: CurrentUser): Promise<Appointment[]> {
     if (currentUser.salonId == null) {
       throw new ForbiddenException('El usuario no tiene salon asignado');
     }
 
     const data = await this.appointmentsRepository.find({
-      relations: ['client', 'employee', 'service'],
+      // service--->services
+      relations: ['client', 'employee', 'services'],
       where: { salonId: currentUser.salonId },
       order: { startTime: 'ASC' },
     });
@@ -110,16 +117,12 @@ export class AppointmentsService {
     return data;
   }
 
-  /**
-   * Obtiene un turno por su ID.
-   * @param id ID del turno.
-   * @returns Turno encontrado con todas sus relaciones.
-   * @throws NotFoundException Si el turno no existe.
-   */
+  // --- FIND ONE ---
   async findOne(id: number): Promise<Appointment> {
     const appointment = await this.appointmentsRepository.findOne({
       where: { id },
-      relations: ['client', 'employee', 'service', 'salon'],
+      // service--->services
+      relations: ['client', 'employee', 'services', 'salon'],
     });
 
     if (!appointment) {
@@ -128,56 +131,83 @@ export class AppointmentsService {
     return appointment;
   }
 
-  /**
-   * Actualiza un turno existente.
-   * Valida que el turno pertenezca al salón del usuario y recalcula la duración si cambia el servicio.
-   * @param id ID del turno a actualizar.
-   * @param dto DTO con los datos a actualizar.
-   * @param currentUser Usuario autenticado que realiza la solicitud.
-   * @returns Turno actualizado.
-   * @throws ForbiddenException Si el usuario no tiene un salón asignado o no tiene permiso.
-   * @throws NotFoundException Si el turno no existe.
-   * @throws InternalServerErrorException Si hay error durante la actualización.
-   */
+  // --- UPDATE ---
   async update(
     id: number,
     dto: UpdateAppointmentDto,
     currentUser: CurrentUser,
   ): Promise<Appointment> {
-
     if (!currentUser.salonId) {
       throw new ForbiddenException('This user is not associated with any salon');
     }
 
+    // Buscamos el turno actual, incluyendo sus servicios actuales
     const appointment = await this.appointmentsRepository.findOne({
       where: { id, salonId: currentUser.salonId },
+      relations: ['services']
     });
-
-    if (appointment && appointment.serviceId !== dto.serviceId) {
-      const service = await this.service.findOne(dto.serviceId!, currentUser);
-      this.setFinishTime(dto, service);
-    }
 
     if (!appointment) {
       throw new NotFoundException(`Appointment with ID ${id} not found`);
     }
 
-    try {
-      const updatedAppointment = await this.appointmentsRepository.preload({
-        id,
-        ...dto,
-      });
+    // Preparar objeto de actualización
+    // Utilizo Object.assign para mezclar lo que ya tenía con lo nuevo del DTO
+    const updatedData: any = { ...dto };
 
-      if (!updatedAppointment) {
-        throw new NotFoundException(`Cant update Appointment with ID ${id}`);
+    // Si cambiaron los servicios O la hora de inicio
+    const hasServiceChange = dto.serviceIds && dto.serviceIds.length > 0;
+    const hasTimeChange = !!dto.startTime;
+
+    if (hasServiceChange || hasTimeChange) {
+      
+      let servicesToUse = appointment.services;
+
+      // Si enviaron nuevos servicios, buscarlos
+      if (hasServiceChange) {
+         servicesToUse = await this.servicesRepository.findBy({
+            id: In(dto.serviceIds!),
+         });
+         updatedData.services = servicesToUse;
       }
 
-      return await this.appointmentsRepository.save(updatedAppointment);
+      // Recalcular totales
+      const totalDurationMin = servicesToUse.reduce((sum, s) => sum + s.durationMin, 0);
+      const totalPrice = servicesToUse.reduce((sum, s) => sum + Number(s.price), 0);
+      
+      updatedData.duration = totalDurationMin;
+      updatedData.totalPrice = totalPrice;
+
+      // Recalcular hora fin
+      const startTime = new Date(dto.startTime || appointment.startTime);
+      const finishTime = new Date(startTime.getTime() + totalDurationMin * 60000);
+      
+      updatedData.startTime = startTime; // Asegurar formato Date
+      updatedData.finishTime = finishTime;
+
+      // Validar disponibilidad si cambiaron horas o servicios
+      // (Si no enviaron employeeId, usamos el que ya tenía el turno)
+      const employeeIdToCheck = dto.employeeId || appointment.employeeId;
+      if (employeeIdToCheck) {
+         // Solo validamos si realmente cambió algo de tiempo o el empleado
+         const isSameTime = startTime.getTime() === appointment.startTime.getTime() && finishTime.getTime() === appointment.finishTime.getTime();
+         
+         if (!isSameTime || dto.employeeId) {
+             // Excluir el turno actual de la validación (para que no choque consigo mismo)
+             if (await this.checkDisponibility(employeeIdToCheck, startTime, finishTime, id)) {
+                throw new ForbiddenException('El empleado no está disponible en el nuevo horario calculado');
+             }
+         }
+      }
+    }
+
+    try {
+      // Utilizo save por la relacion manytomany, preload puede fallar!
+      const mergedAppointment = this.appointmentsRepository.merge(appointment, updatedData);
+      return await this.appointmentsRepository.save(mergedAppointment);
+
     } catch (error) {
-      if (
-        error instanceof NotFoundException ||
-        error instanceof ForbiddenException
-      ) {
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
         throw error;
       }
       throw new InternalServerErrorException(
@@ -186,15 +216,7 @@ export class AppointmentsService {
     }
   }
 
-  /**
-   * Elimina un turno.
-   * Valida que el turno pertenezca al salón del usuario autenticado.
-   * @param id ID del turno a eliminar.
-   * @param currentUser Usuario autenticado que realiza la solicitud.
-   * @returns Turno eliminado.
-   * @throws ForbiddenException Si el usuario no tiene un salón asignado o no tiene permiso.
-   * @throws NotFoundException Si el turno no existe.
-   */
+  // --- REMOVE ---
   async remove(id: number, currentUser: CurrentUser) {
     if (!currentUser.salonId) {
       throw new ForbiddenException('This user is not associated with any salon');
@@ -208,20 +230,10 @@ export class AppointmentsService {
     return await this.appointmentsRepository.remove(appointment);
   }
 
-  /**
-   * Elimina todos los turnos (uso administrativo/testing).
-   * @returns Resultado de la eliminación.
-   */
   async removeAll() {
     return await this.appointmentsRepository.deleteAll();
   }
 
-  /**
-   * Cancela un turno sin eliminarlo (cambia estado a "cancelado").
-   * @param id ID del turno a cancelar.
-   * @returns Turno cancelado.
-   * @throws NotFoundException Si el turno no existe.
-   */
   async cancel(id: number) {
     const appointment = await this.appointmentsRepository.findOne({
       where: { id },
@@ -232,41 +244,37 @@ export class AppointmentsService {
     }
 
     appointment.status = 'cancelado';
-
     return await this.appointmentsRepository.save(appointment);
   }
 
-  /**
-   * Calcula y asigna la hora de finalización del turno basada en la duración del servicio.
-   * @param dto DTO del turno (se modifica internamente).
-   * @param service Servicio contratado.
-   * @private
-   */
-  private async setFinishTime(dto: UpdateAppointmentDto, service: Service) {
-    const startTime = new Date(dto.startTime!);
-    const finishTime = new Date(startTime.getTime() + service.durationMin * 60000);
-    dto.finishTime = finishTime.toISOString();
-    dto.duration = service.durationMin;
-  }
+  // --- HELPERS ---
 
   /**
-   * Verifica si un empleado está disponible en el horario solicitado.
-   * Busca solapamientos con otros turnos del mismo empleado.
-   * @param dto DTO con startTime, finishTime y employeeId.
-   * @returns true si hay conflicto de horario, false si está disponible.
-   * @private
+   * Verifica si un empleado está disponible.
+   * Se agregó 'excludeAppointmentId' para permitir actualizaciones del mismo turno sin que choque consigo mismo.
    */
   private async checkDisponibility(
-    dto: CreateAppointmentDto,
+    employeeId: number,
+    startTime: Date,
+    finishTime: Date,
+    excludeAppointmentId?: number
   ): Promise<boolean> {
-    const result = await this.appointmentsRepository.findOne({
-      where: {
-        employeeId: dto.employeeId,
-        startTime: LessThan(new Date(dto.finishTime)),
-        finishTime: MoreThan(new Date(dto.startTime)),
-      },
-    });
+    
+    const queryBuilder = this.appointmentsRepository.createQueryBuilder('appointment');
 
-    return result ? true : false;
+    queryBuilder
+      .where('appointment.employeeId = :employeeId', { employeeId })
+      .andWhere('appointment.status != :status', { status: 'cancelado' }) // Ignorar cancelados
+      .andWhere(
+        '(appointment.startTime < :finishTime AND appointment.finishTime > :startTime)',
+        { startTime, finishTime }
+      );
+
+    if (excludeAppointmentId) {
+        queryBuilder.andWhere('appointment.id != :id', { id: excludeAppointmentId });
+    }
+
+    const count = await queryBuilder.getCount();
+    return count > 0;
   }
 }
