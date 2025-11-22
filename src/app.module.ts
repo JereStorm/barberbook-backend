@@ -38,7 +38,7 @@ import { Service } from './modules/services/entities/service.entity';
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_NAME'),
         entities: [User, Salon, Appointment, Client, Service],
-        synchronize: false, 
+        synchronize: true, // Al correr la primera vez, dejar synchrinize activado, cambio el esquema de la tabla!
         logging: configService.get('NODE_ENV') === 'development',
       }),
       inject: [ConfigService],
