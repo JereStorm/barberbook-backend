@@ -70,17 +70,31 @@ export class AppointmentsController {
    * @returns Array de turnos en formato AppointmentResponseDto.
    * @throws HttpException Si el usuario no tiene un salonId asignado.
    */
-  @Get()
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA)
-  async findAll(
-    @GetCurrentUser() currentUser: CurrentUser,
-  ): Promise<AppointmentResponseDto[]> {
-    if (!currentUser.salonId) {
-      throw new HttpException(
-        { message: 'Missing salonId in current user' },
-        HttpStatus.BAD_REQUEST,
-      );
+
+//Estilista agregado al get de turnos
+ @Get()
+ @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA, UserRole.ESTILISTA)
+ async findAll(
+  @GetCurrentUser() currentUser: CurrentUser,
+ ): Promise<AppointmentResponseDto[]> {
+  
+    // Si es Estilista, se utiliza el modo que tenemos en servicio
+    if (currentUser.role === UserRole.ESTILISTA) {
+       // Vamos con el ID de empleado
+       const appointments = await this.appointmentsService.findAllByEmployee(currentUser.id);
+       return plainToInstance(AppointmentResponseDto, appointments, {
+         excludeExtraneousValues: true,
+       });
     }
+
+    // Para Admin y Recepcionista, se sigue la logica original, se ve todo el salon
+  if (!currentUser.salonId) {
+   throw new HttpException(
+    { message: 'Missing salonId in current user' },
+    HttpStatus.BAD_REQUEST,
+   );
+  }
+
 
     const appointments = await this.appointmentsService.findAll(currentUser);
     return plainToInstance(AppointmentResponseDto, appointments, {
@@ -127,8 +141,10 @@ export class AppointmentsController {
    * @returns Turno actualizado en formato AppointmentResponseDto.
    * @throws HttpException Si hay error en la actualización.
    */
+
+  //Estilista agregado al patch de turnos
   @Patch(':id')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA, UserRole.ESTILISTA)
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateAppointmentDto,
@@ -166,7 +182,7 @@ export class AppointmentsController {
    * @throws NotFoundException Si el turno no existe.
    */
   @Patch('cancel/:id')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA, UserRole.ESTILISTA)
   async cancelAppointment(
     @Param('id', ParseIntPipe) id: number,
     @GetCurrentUser() currentUser: CurrentUser,
