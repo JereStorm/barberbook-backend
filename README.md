@@ -61,6 +61,13 @@ DB_NAME = barberbook
 DB_TYPE = mysql
 ```
 
+### 3.4 Configurar variables de Autenticacion
+
+```bash
+JWT_SECRET=tu_jwt_secret_muy_seguro_aqui_min_32_chars
+JWT_EXPIRE=24h
+```
+
 ### 3.4 Levantar la base de datos (ejemplo con Workbench)
 
 Crear schema llamado "barberbook"
