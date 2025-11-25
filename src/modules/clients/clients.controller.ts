@@ -77,7 +77,7 @@ export class ClientsController {
    * @throws HttpException Lanza un error si el usuario no tiene un salón asociado.
    */
   @Get()
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA, UserRole.ESTILISTA)
   async findAll(
     @GetCurrentUser() currentUser: CurrentUser,
   ): Promise<ClientResponseDto[]> {
