@@ -25,7 +25,7 @@ export class CreateUserDto {
 
   @IsOptional()
   @Transform(({ value }) => (value === '' ? undefined : value))
-  @IsPhoneNumber()
+  @IsPhoneNumber('AR', { message: 'Debe proporcionar un número de teléfono argentino válido' })
   mobile?: string;
 
   @IsNotEmpty({ message: 'La contraseña es obligatoria' })
