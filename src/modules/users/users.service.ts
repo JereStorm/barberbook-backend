@@ -203,7 +203,7 @@ export class UsersService {
   }
 
   private canModifyUser(currentUser: CurrentUser, targetUser: User): boolean {
-    // Super admin puede modificar a cualquiera excepto a otros super admins
+    // Super admin puede modificarse a si mismo, a cualquiera otro excepto a otros super admins
     if (currentUser.role === UserRole.SUPER_ADMIN) {
       return targetUser.role !== UserRole.SUPER_ADMIN || currentUser.id === targetUser.id;
     }
@@ -213,13 +213,19 @@ export class UsersService {
       return false;
     }
 
-    // Admin puede modificar recepcionistas y estilistas
+    // Admin puede modificar recepcionistas y estilistas y a si mismo
     if (currentUser.role === UserRole.ADMIN) {
+      if (currentUser.id === targetUser.id){
+        return true;
+      }
       return [UserRole.RECEPCIONISTA, UserRole.ESTILISTA].includes(targetUser.role);
     }
 
-    // Recepcionista solo puede modificar estilistas
+    // Recepcionista solo puede modificar estilistas y a si mismo
     if (currentUser.role === UserRole.RECEPCIONISTA) {
+      if (currentUser.id === targetUser.id){
+        return true;
+      }
       return targetUser.role === UserRole.ESTILISTA;
     }
 

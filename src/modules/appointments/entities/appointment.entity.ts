@@ -59,19 +59,17 @@ export class Appointment {
     nullable: true,
     enum: [
       "activo",
-      "pendiente",
-      "confirmado",
       "cancelado",
       "completado",
+      "caducado",
     ],
     default: "activo",
   })
   status:
     | "activo"
-    | "pendiente"
-    | "confirmado"
     | "cancelado"
     | "completado"
+    | "caducado"
     | null;
 
   @Column("text", { name: "notes", nullable: true })

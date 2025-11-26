@@ -39,19 +39,19 @@ INSERT INTO appointments
 (id, salon_id, start_time, finish_time, duration, total_price, client_id, employee_id, status, notes, created_by) 
 VALUES
 -- Turno 1: Carlos Gómez (Corte Clásico) -> ID 1
-(1, 1, '2025-11-25 10:00:00', '2025-11-25 10:30:00', 30, 10000.00, 1, 4, 'pendiente', 'Cliente pidió rebajar laterales.', 3),
+(1, 1, '2025-11-25 10:00:00', '2025-11-25 10:30:00', 30, 10000.00, 1, 4, 'activo', 'Cliente pidió rebajar laterales.', 3),
 
 -- Turno 2: María Pérez (Afeitado) -> ID 2
-(2, 1, '2025-11-25 11:00:00', '2025-11-25 11:20:00', 20, 5000.00, 2, 4, 'pendiente', 'Afeitado completo.', 3),
+(2, 1, '2025-11-25 11:00:00', '2025-11-25 11:20:00', 20, 5000.00, 2, 4, 'activo', 'Afeitado completo.', 3),
 
 -- Turno 3: Jorge Sánchez (Coloración) -> ID 3
-(3, 1, '2025-11-25 14:00:00', '2025-11-25 15:00:00', 60, 40000.00, 3, NULL, 'pendiente', 'Tono castaño oscuro.', 3),
+(3, 1, '2025-11-25 14:00:00', '2025-11-25 15:00:00', 60, 40000.00, 3, NULL, 'activo', 'Tono castaño oscuro.', 3),
 
 -- Turno 4: Ana López (Corte Moderno) -> ID 4
-(4, 1, '2025-11-26 09:30:00', '2025-11-26 10:00:00', 30, 20000.00, 4, 4, 'pendiente', NULL, 3),
+(4, 1, '2025-11-26 09:30:00', '2025-11-26 10:00:00', 30, 20000.00, 4, 4, 'activo', NULL, 3),
 
 -- Turno 5: Carlos Gómez (Tratamiento) -> ID 5
-(5, 1, '2025-11-26 10:15:00', '2025-11-26 11:00:00', 45, 35000.00, 1, 4, 'pendiente', 'Solicita producto hidratante.', 3);
+(5, 1, '2025-11-26 10:15:00', '2025-11-26 11:00:00', 45, 35000.00, 1, 4, 'activo', 'Solicita producto hidratante.', 3);
 
 -- 6. Relacionar Turnos con Servicios (Tabla Intermedia)
 INSERT INTO appointments_services (appointment_id, service_id) VALUES
@@ -66,7 +66,7 @@ INSERT INTO appointments_services (appointment_id, service_id) VALUES
 INSERT INTO appointments 
 (id, salon_id, start_time, finish_time, duration, total_price, client_id, employee_id, status, notes, created_by) 
 VALUES
-(6, 1, '2025-11-27 15:00:00', '2025-11-27 15:50:00', 50, 15000.00, 3, 4, 'confirmado', 'Paquete completo', 3);
+(6, 1, '2025-11-27 15:00:00', '2025-11-27 15:50:00', 50, 15000.00, 3, 4, 'completado', 'Paquete completo', 3);
 
 -- Asigno los dos servicios al turno 6
 INSERT INTO appointments_services (appointment_id, service_id) VALUES

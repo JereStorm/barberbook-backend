@@ -76,7 +76,7 @@ CREATE TABLE appointments (
     client_id INT NOT NULL,
     employee_id INT NULL,
     -- service_id ELIMINADO (ahora es N:N)
-    status ENUM('activo', 'pendiente', 'confirmado', 'cancelado', 'completado') DEFAULT 'pendiente',
+    status ENUM('activo', 'cancelado', 'completado', 'caducado') DEFAULT 'activo',
     notes TEXT NULL,
     created_by INT NOT NULL,
     updated_by INT NULL,
