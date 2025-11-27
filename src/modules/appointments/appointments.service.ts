@@ -157,12 +157,8 @@ export class AppointmentsService {
     const updatedData: any = { ...dto };
 
     // Si cambiaron los servicios O la hora de inicio
-    // TODO: EL UPDATE ANDA PARA AGREGAR SERVICIOS PERO NO PARA SACAR UNO O VARIOS (SOLUCION MAS ABAJO)
     const hasServiceChange = dto.serviceIds && dto.serviceIds.length > 0;
     const hasTimeChange = !!dto.startTime;
-
-    console.log(dto.serviceIds)
-    console.log(appointment.services)
 
     if (hasServiceChange || hasTimeChange) {
       let servicesToUse = appointment.services;
@@ -199,16 +195,16 @@ export class AppointmentsService {
         if (!isSameTime || dto.employeeId) {
           // Excluir el turno actual de la validación (para que no choque consigo mismo)
           if (await this.checkDisponibility(employeeIdToCheck, startTime, finishTime, id)) {
-            throw new ForbiddenException('El empleado no está disponible en el nuevo horario calculado');
+            throw new ForbiddenException('El empleado no está disponible en esos horarios');
           }
         }
       }
     }
 
     try {
-      // Utilizo save por la relacion manytomany, preload puede fallar!
+      // Utilizo save por la relacion manytomany
       const mergedAppointment = this.appointmentsRepository.merge(appointment, updatedData);
-      // TODO: ACA EL MERGED APPOINTMENT NO DISTINGUE AL DESELECCIONAR ALGUN SERVICIO
+      //Actualizamos los servicios viejos por los nuevos
       mergedAppointment.services = updatedData.services;
       return await this.appointmentsRepository.save(mergedAppointment);
 
@@ -267,7 +263,6 @@ export class AppointmentsService {
   ): Promise<boolean> {
 
     const queryBuilder = this.appointmentsRepository.createQueryBuilder('appointment');
-
     queryBuilder
       .where('appointment.employeeId = :employeeId', { employeeId })
       .andWhere('appointment.status != :status', { status: 'cancelado' }) // Ignorar cancelados
@@ -275,6 +270,8 @@ export class AppointmentsService {
         '(appointment.startTime < :finishTime AND appointment.finishTime > :startTime)',
         { startTime, finishTime }
       );
+
+      
 
     if (excludeAppointmentId) {
       queryBuilder.andWhere('appointment.id != :id', { id: excludeAppointmentId });

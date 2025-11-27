@@ -164,7 +164,7 @@ export class AppointmentsController {
     } catch (error) {
       throw new HttpException(
         {
-          message: 'Error updating Appointment',
+          message: error.message,
           error: error?.message || 'Unexpected error',
         },
         error?.status || HttpStatus.BAD_REQUEST,

@@ -5,14 +5,14 @@ USE barberbook;
 
 -- 1. Salon
 INSERT INTO salons (name, address, mobile) 
-VALUES ('Salón Elegante', 'Av. Corrientes 1234, Buenos Aires', '+54 11 1234-5678');
+VALUES ('Salón Elegante', 'Av. Corrientes 1234, Buenos Aires', '+541112345678');
 
 -- 2. Usuarios
 -- Password para todos: SuperAdmin123!
 INSERT INTO users (salon_id, name, email, mobile, password_hash, role, is_active, created_by) VALUES 
-(1, 'Juan Pérez', 'admin@salonelegante.com', '+541187654321', '$2b$10$hv5oMu5hbP9mGW2ZUE5ib.R//Ly3kL24O8hlbviHic299P1EsgZj6', 'admin', TRUE, 1),
-(1, 'María González', 'maria@salonelegante.com', '+541155551234', '$2b$10$hv5oMu5hbP9mGW2ZUE5ib.R//Ly3kL24O8hlbviHic299P1EsgZj6', 'recepcionista', TRUE, 2),
-(1, 'Carlos Rodríguez', 'carlos@salonelegante.com', '+541199998888', '$2b$10$hv5oMu5hbP9mGW2ZUE5ib.R//Ly3kL24O8hlbviHic299P1EsgZj6', 'estilista', TRUE, 3);
+(1, 'Juan Pérez', 'admin@salonelegante.com', '+542284654321', '$2b$10$hv5oMu5hbP9mGW2ZUE5ib.R//Ly3kL24O8hlbviHic299P1EsgZj6', 'admin', TRUE, 1),
+(1, 'María González', 'maria@salonelegante.com', '+542284551234', '$2b$10$hv5oMu5hbP9mGW2ZUE5ib.R//Ly3kL24O8hlbviHic299P1EsgZj6', 'recepcionista', TRUE, 2),
+(1, 'Carlos Rodríguez', 'carlos@salonelegante.com', '+542284998888', '$2b$10$hv5oMu5hbP9mGW2ZUE5ib.R//Ly3kL24O8hlbviHic299P1EsgZj6', 'estilista', TRUE, 3);
 
 -- 3. Clientes
 INSERT INTO clients (salon_id, name, email, mobile) VALUES

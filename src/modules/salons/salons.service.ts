@@ -30,7 +30,10 @@ export class SalonsService {
   ) {}
 
   // Este metodo crea un salon y su administrador en una unica operacion.
-  async create(createSalonDto: CreateSalonDto, currentUser: CurrentUser): Promise<Salon> {
+  async create(
+    createSalonDto: CreateSalonDto,
+    currentUser: CurrentUser,
+  ): Promise<Salon> {
     // La primera validacion es de permisos, solo el 'super_admin' puede hacer esto.
     if (currentUser.role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Solo el Super Admin puede crear salones');
@@ -55,7 +58,7 @@ export class SalonsService {
     }
 
     // Usamos una transaccion de TypeORM-----> si falla la creacion
-    // del admin, no se va a guardar tampoco el salon. 
+    // del admin, no se va a guardar tampoco el salon.
     return await this.dataSource.transaction(async (manager) => {
       // 1. Crear el salon.
       const salon = manager.create(Salon, {
@@ -69,7 +72,10 @@ export class SalonsService {
       // 2. Crear el administrador del salon.
       // Aca hasheamos la contrasena antes de guardarla--->bs
       const saltRounds = 10;
-      const passwordHash = await bcrypt.hash(createSalonDto.admin.password, saltRounds);
+      const passwordHash = await bcrypt.hash(
+        createSalonDto.admin.password,
+        saltRounds,
+      );
 
       const admin = manager.create(User, {
         salonId: savedSalon.id,
@@ -102,7 +108,9 @@ export class SalonsService {
   async findAll(currentUser: CurrentUser): Promise<Salon[]> {
     // Aca nos aseguramos de que solo el 'super_admin' tenga permiso para ver la lista completa.
     if (currentUser.role !== UserRole.SUPER_ADMIN) {
-      throw new ForbiddenException('Solo el Super Admin puede ver todos los salones');
+      throw new ForbiddenException(
+        'Solo el Super Admin puede ver todos los salones',
+      );
     }
 
     // Devolvemos todos los salones, incluyendo sus usuarios--->se ordenan por fecha
@@ -132,13 +140,19 @@ export class SalonsService {
   }
 
   // Este metodo actualiza un salon.
-  async update(id: number, updateSalonDto: UpdateSalonDto, currentUser: CurrentUser): Promise<Salon> {
+  async update(
+    id: number,
+    updateSalonDto: UpdateSalonDto,
+    currentUser: CurrentUser,
+  ): Promise<Salon> {
     // Primero, nos fijamos si el salon existe y si el usuario tiene permiso para modificarlo.
     const salon = await this.findOne(id, currentUser);
 
     // Si el usuario no puede modificarlo, tira error.
     if (!this.canModifySalon(currentUser, salon)) {
-      throw new ForbiddenException('No tienes permisos para modificar este salón');
+      throw new ForbiddenException(
+        'No tienes permisos para modificar este salón',
+      );
     }
 
     // Si el nombre del salon esta cambiando, nos fijamos que el nuevo nombre no este ya en uso.
@@ -161,7 +175,9 @@ export class SalonsService {
   async remove(id: number, currentUser: CurrentUser): Promise<void> {
     // La primera y unica validacion de permisos es que solo el 'super_admin' puede borrar salones.
     if (currentUser.role !== UserRole.SUPER_ADMIN) {
-      throw new ForbiddenException('Solo el Super Admin puede eliminar salones');
+      throw new ForbiddenException(
+        'Solo el Super Admin puede eliminar salones',
+      );
     }
 
     // Nos aseguramos de que el salon que se quiere borrar exista.
@@ -174,7 +190,7 @@ export class SalonsService {
 
     if (activeUsersCount > 0) {
       throw new ConflictException(
-        `No se puede eliminar el salón porque tiene ${activeUsersCount} usuario(s) activo(s). Desactívelos primero.`
+        `No se puede eliminar el salón porque tiene ${activeUsersCount} usuario(s) activo(s). Desactívelos primero.`,
       );
     }
 
@@ -192,6 +208,52 @@ export class SalonsService {
       where: { id: currentUser.salonId },
       relations: ['users'],
     });
+  }
+
+  // Este metodo deshabilita un salon.
+  async disable(id: number, currentUser: CurrentUser): Promise<boolean> {
+    // La primera y unica validacion de permisos es que solo el 'super_admin' puede deshabilitar salones.
+    if (currentUser.role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException(
+        'Solo el Super Admin puede deshabilitar salones',
+      );
+    }
+
+    // Nos aseguramos de que el salon que se quiere borrar exista.
+    const salon = await this.findOne(id, currentUser);
+
+    //Deshabilitamos a todos los usuarios relacionados a ese salon
+    if (salon) {
+      await this.userRepository.update(
+        { salonId: id, isActive: true },
+        { isActive: false },
+      );
+      return true;
+    }
+    return false;
+  }
+
+  // Este metodo habilita un salon.
+  async enable(id: number, currentUser: CurrentUser): Promise<boolean> {
+    // La primera y unica validacion de permisos es que solo el 'super_admin' puede habilita salones.
+    if (currentUser.role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException(
+        'Solo el Super Admin puede habilitar salones',
+      );
+    }
+
+    // Nos aseguramos de que el salon que se quiere borrar exista.
+    const salon = await this.findOne(id, currentUser);
+
+    //habilitamos a todos los usuarios relacionados a ese salon
+    if (salon) {
+      await this.userRepository.update(
+        { salonId: id, isActive: false },
+        { isActive: true },
+      );
+      return true;
+    }
+    return false;
   }
 
   // === METODOS PRIVADOS DE VALIDACION ===
@@ -214,7 +276,10 @@ export class SalonsService {
     }
 
     // El 'admin' solo puede modificar su propio salon.
-    if (currentUser.role === UserRole.ADMIN && currentUser.salonId === salon.id) {
+    if (
+      currentUser.role === UserRole.ADMIN &&
+      currentUser.salonId === salon.id
+    ) {
       return true;
     }
 

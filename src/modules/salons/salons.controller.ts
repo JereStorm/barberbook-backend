@@ -153,4 +153,28 @@ export class SalonsController {
     await this.salonsService.remove(id, currentUser);
     return { message: 'Salón eliminado correctamente' };
   }
+
+  //Deshabilita un salon (desactiva a todos sus usuarios)
+  @Patch(':id/disable-users')
+  async disable(
+    @Param('id', ParseIntPipe) id: number,
+    @GetCurrentUser() currentUser: CurrentUser,
+  ) {
+    const success = await this.salonsService.disable(id, currentUser);
+    return { message: 'Salón desactivado correctamente' ,
+      success: success
+    };
+  }
+
+  //Habilita un salon (activa a todos sus usuarios)
+  @Patch(':id/enable-users')
+  async enable(
+    @Param('id', ParseIntPipe) id: number,
+    @GetCurrentUser() currentUser: CurrentUser,
+  ) {
+    const success = await this.salonsService.enable(id, currentUser);
+    return { message: 'Salón activado correctamente' ,
+      success: success
+    };
+  }
 }
