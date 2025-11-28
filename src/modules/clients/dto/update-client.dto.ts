@@ -16,7 +16,7 @@ export class UpdateClientDto extends PartialType(CreateClientDto) {
     email?: string | null;
 
     @IsOptional()
-    @IsString({ message: 'Debe proporcionar un número de teléfono válido' })
+    @IsPhoneNumber('AR', { message: 'Debe proporcionar un número de teléfono argentino válido' })
     @Transform(({ value }) => (value === '' ? undefined : value))
     mobile?: string | null;
 }

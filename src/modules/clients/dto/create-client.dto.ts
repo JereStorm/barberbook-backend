@@ -26,7 +26,7 @@ export class CreateClientDto {
   email?: string | null;
 
   @IsOptional()
-  @IsPhoneNumber(undefined, { message: 'Debe proporcionar un número de teléfono válido' })
+  @IsPhoneNumber('AR', { message: 'Debe proporcionar un número de teléfono argentino válido' })
   @Transform(({ value }) => (value === '' ? undefined : value))
   mobile?: string | null;
 }
