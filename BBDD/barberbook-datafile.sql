@@ -3,10 +3,21 @@
 -- Host: 127.0.0.1    Database: barberbook
 -- ------------------------------------------------------
 -- Server version	8.0.41
+-- ======================
 
+-- SEEDS COMPLETOS (6 salones) - IDs FIJOS
+-- SUPER ADMIN ID=1 SE MANTIENE
+
+-- Password para todos los usuarios: 12345nN!
+
+-- HASH REAL bcrypt (10 rounds):
+-- $2b$10$gBmvbihFfB3OfzHnZhO/OeYFfHecHiV3OxQmMQSj4fj8MgDVmqvXW
+
+-- ======================
 -- ==========================================
 -- BarberBook Database Schema
 -- ==========================================
+
 DROP schema IF EXISTS barberbook;
 CREATE schema barberbook;
 USE barberbook;
