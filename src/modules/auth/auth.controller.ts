@@ -13,6 +13,7 @@ import { LoginDto, AuthResponseDto } from './dto/auth.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { GetCurrentUser } from '../../common/decorators/current-user.decorator';
 import type { CurrentUser } from '../../common/interfaces/current-user.interface';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 // Maneja las peticiones que llegan a la api
 
@@ -35,6 +36,7 @@ export class AuthController {
   // Este metodo maneja las peticiones get que van a '/auth/profile'.
   // '@UseGuards' se encarga de usar el 'JwtAuthGuard' para chequear que el usuario este logueado y tenga un token valido.
   @Get('profile')
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   async getProfile(@GetCurrentUser() currentUser: CurrentUser) {
     // '@GetCurrentUser' es el decorador que creamos. Lo usamos para obtener la informacion del usuario que esta 
@@ -56,6 +58,7 @@ export class AuthController {
   // El 'logout' es algo simbolico, aca solo mandamos un mensaje de exito.
   // La accion real de cerrar sesion (eliminar el token) se hace en el frontend.
   @Post('logout')
+  @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async logout() {

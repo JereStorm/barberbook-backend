@@ -24,12 +24,14 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { GetCurrentUser } from '../../common/decorators/current-user.decorator';
 import type { CurrentUser } from '../../common/interfaces/current-user.interface';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 /**
  * Controlador para la gestión de servicios.
  * Provee endpoints para crear, obtener, actualizar y eliminar servicios de un salón.
  */
 @Controller('services')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ServicesController {
   constructor(private readonly servicesService: ServicesService) { }

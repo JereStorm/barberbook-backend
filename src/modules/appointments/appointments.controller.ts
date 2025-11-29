@@ -25,6 +25,7 @@ import { GetCurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AppointmentResponseDto } from './dto/appointment-response.dto';
 import { plainToClass, plainToInstance } from 'class-transformer';
 import { App } from 'supertest/types';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 /**
  * Controlador para la gestión de turnos/citas.
@@ -32,6 +33,7 @@ import { App } from 'supertest/types';
  * Todos los endpoints requieren autenticación JWT y validación de roles.
  */
 @Controller('appointments')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) { }
