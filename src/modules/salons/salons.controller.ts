@@ -20,9 +20,11 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/enums/user-role.enum';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 
 @Controller('salons')
+@ApiBearerAuth('access-token')
 // Con '@UseGuards' le decimos a nest que todas las rutas de este controlador van a pasar por estos dos guards.
 // Primero se va a chequear el 'JwtAuthGuard' para validar el token y despues el 'RolesGuard' para ver los permisos.
 @UseGuards(JwtAuthGuard, RolesGuard)

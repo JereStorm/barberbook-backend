@@ -25,12 +25,14 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/enums/user-role.enum';
 import { GetCurrentUser } from '../../common/decorators/current-user.decorator';
 import type { CurrentUser } from '../../common/interfaces/current-user.interface';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 /**
  * Controlador para la gestión de clientes.
  * Provee endpoints para crear, obtener, actualizar y eliminar clientes.
  */
 @Controller('clients')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) { }
