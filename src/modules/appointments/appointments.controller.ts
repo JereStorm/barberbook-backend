@@ -11,6 +11,7 @@ import {
   HttpStatus,
   Patch,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
@@ -36,7 +37,7 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AppointmentsController {
-  constructor(private readonly appointmentsService: AppointmentsService) { }
+  constructor(private readonly appointmentsService: AppointmentsService) {}
 
   /**
    * @description Crea un nuevo turno.
@@ -73,32 +74,82 @@ export class AppointmentsController {
    * @throws HttpException Si el usuario no tiene un salonId asignado.
    */
 
-//Estilista agregado al get de turnos
- @Get()
- @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA, UserRole.ESTILISTA)
- async findAll(
-  @GetCurrentUser() currentUser: CurrentUser,
- ): Promise<AppointmentResponseDto[]> {
-  
+  //Estilista agregado al get de turnos
+  @Get()
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.ADMIN,
+    UserRole.RECEPCIONISTA,
+    UserRole.ESTILISTA,
+  )
+  async findAll(
+    @GetCurrentUser() currentUser: CurrentUser,
+  ): Promise<AppointmentResponseDto[]> {
     // Si es Estilista, se utiliza el modo que tenemos en servicio
     if (currentUser.role === UserRole.ESTILISTA) {
-       // Vamos con el ID de empleado
-       const appointments = await this.appointmentsService.findAllByEmployee(currentUser.id);
-       return plainToInstance(AppointmentResponseDto, appointments, {
-         excludeExtraneousValues: true,
-       });
+      // Vamos con el ID de empleado
+      const appointments = await this.appointmentsService.findAllByEmployee(
+        currentUser.id,
+      );
+      return plainToInstance(AppointmentResponseDto, appointments, {
+        excludeExtraneousValues: true,
+      });
     }
 
     // Para Admin y Recepcionista, se sigue la logica original, se ve todo el salon
-  if (!currentUser.salonId) {
-   throw new HttpException(
-    { message: 'Missing salonId in current user' },
-    HttpStatus.BAD_REQUEST,
-   );
-  }
-
+    if (!currentUser.salonId) {
+      throw new HttpException(
+        { message: 'Missing salonId in current user' },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
 
     const appointments = await this.appointmentsService.findAll(currentUser);
+    return plainToInstance(AppointmentResponseDto, appointments, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  /**
+   * @description Obtiene todos los turnos del salón del usuario autenticado en el dia actual.
+   * @route GET /appointments
+   * @access Solo para SUPER_ADMIN, ADMIN y RECEPCIONISTA.
+   * @param currentUser Usuario autenticado (para obtener su salonId).
+   * @returns Array de turnos en formato AppointmentResponseDto.
+   * @throws HttpException Si el usuario no tiene un salonId asignado.
+   */
+
+  //Estilista agregado al get de turnos
+  @Get('today')
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.ADMIN,
+    UserRole.RECEPCIONISTA,
+    UserRole.ESTILISTA,
+  )
+  async findAllToday(
+    @GetCurrentUser() currentUser: CurrentUser,
+    @Query('cant') cant?: number,
+  ): Promise<AppointmentResponseDto[]> {
+    // Si es Estilista, se utiliza el modo que tenemos en servicio
+    if (currentUser.role === UserRole.ESTILISTA) {
+      // Vamos con el ID de empleado
+      const appointments =
+        await this.appointmentsService.findAllByEmployeeToday(currentUser.id, cant);
+      return plainToInstance(AppointmentResponseDto, appointments, {
+        excludeExtraneousValues: true,
+      });
+    }
+
+    // Para Admin y Recepcionista, se sigue la logica original, se ve todo el salon
+    if (!currentUser.salonId) {
+      throw new HttpException(
+        { message: 'Missing salonId in current user' },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const appointments = await this.appointmentsService.findAllToday(currentUser, cant);
     return plainToInstance(AppointmentResponseDto, appointments, {
       excludeExtraneousValues: true,
     });
@@ -146,7 +197,12 @@ export class AppointmentsController {
 
   //Estilista agregado al patch de turnos
   @Patch(':id')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA, UserRole.ESTILISTA)
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.ADMIN,
+    UserRole.RECEPCIONISTA,
+    UserRole.ESTILISTA,
+  )
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateAppointmentDto,
@@ -162,7 +218,6 @@ export class AppointmentsController {
       return plainToInstance(AppointmentResponseDto, updatedAppointment, {
         excludeExtraneousValues: true,
       });
-
     } catch (error) {
       throw new HttpException(
         {
@@ -184,7 +239,12 @@ export class AppointmentsController {
    * @throws NotFoundException Si el turno no existe.
    */
   @Patch('cancel/:id')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.RECEPCIONISTA, UserRole.ESTILISTA)
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.ADMIN,
+    UserRole.RECEPCIONISTA,
+    UserRole.ESTILISTA,
+  )
   async cancelAppointment(
     @Param('id', ParseIntPipe) id: number,
     @GetCurrentUser() currentUser: CurrentUser,

@@ -473,6 +473,34 @@
         ]
       }
     },
+    "/appointments/today": {
+      "get": {
+        "operationId": "AppointmentsController_findAllToday",
+        "parameters": [
+          {
+            "name": "cant",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "tags": [
+          "Appointments"
+        ]
+      }
+    },
     "/appointments/{id}": {
       "get": {
         "operationId": "AppointmentsController_findOne",
