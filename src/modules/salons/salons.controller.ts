@@ -68,6 +68,7 @@ export class SalonsController {
       mobile: salon.mobile,
       createdAt: salon.createdAt,
       usersCount: salon.users?.length || 0,
+      owner: salon.users.find(item => item.role === UserRole.ADMIN)?.name,
       // Aca contamos solo los usuarios que estan activos.
       activeUsersCount: salon.users?.filter(user => user.isActive).length || 0,
     }));

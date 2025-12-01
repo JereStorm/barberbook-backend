@@ -32,4 +32,7 @@ export class SalonResponseDto {
     isActive: boolean;
     createdAt: Date;
   }[];
+
+  @Expose()
+  owner?: string;
 }
