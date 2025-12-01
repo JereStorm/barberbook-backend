@@ -163,22 +163,23 @@ export class AppointmentsService {
       throw new ForbiddenException('El usuario no tiene salon asignado');
     }
 
-    const now = new Date();
-
+    const todayStart = new Date();
     const todayEnd = new Date();
+
+    todayStart.setHours(7, 0, 0, 0);
     todayEnd.setHours(23, 59, 59, 999);
 
     const appointments = await this.appointmentsRepository.find({
       where: {
         salonId: currentUser.salonId,
         status: 'activo',
-        startTime: Between(now, todayEnd),
+        startTime: Between(todayStart, todayEnd),
       },
       relations: ['client', 'employee', 'services'],
       order: { startTime: 'ASC' },
       take: cant,
     });
-
+    
     if (!appointments) {
       throw new NotFoundException(
         `Appointments of user with id ${currentUser.salonId} not found`,
