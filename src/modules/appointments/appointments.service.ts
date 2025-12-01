@@ -163,6 +163,10 @@ export class AppointmentsService {
       throw new ForbiddenException('El usuario no tiene salon asignado');
     }
 
+    if(!cant){
+      cant = 5;
+    }
+
     const todayStart = new Date();
     const todayEnd = new Date();
 
