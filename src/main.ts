@@ -18,7 +18,11 @@ async function bootstrap() {
 
   // CORS configurado para desarrollo
   app.enableCors({
-    origin: 'http://localhost:3000', // URL del frontend
+    origin: [
+      'http://localhost:3000',                // Entorno local
+      'https://barber-book.netlify.app',      // Deploy del front en netlify
+      'https://www.barber-book.netlify.app',  // Por si acceden con www->agregue esto porque es una posibilidad de fallo
+    ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
